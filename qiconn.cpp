@@ -437,13 +437,13 @@ namespace qiconn
 		// erased connexions between cr_fd build and now !
 		//		alternative:    if (connections.find(i) != connections.end())
 		if ((FD_ISSET(i, &r_fd)) && (FD_ISSET(i, &cr_fd))) {
-			connections[i]->read();
+			connections[i]->effread();
 		}
 	    }
 	    for (i=0 ; i<biggest_fd ; i++) {
 		// the same should be done here same here JDJDJD
 		if (FD_ISSET(i, &cw_fd))
-		    connections[i]->write();
+		    connections[i]->effwrite();
 	    }
 	}
 	if (exitselect)
@@ -561,10 +561,16 @@ cerr << "BufConnection::BufConnection : could not allocate stringstream ? : " <<
 	raw = false;
     }
 
-    void BufConnection::read (void) {
+    size_t BufConnection::read (void) {
 	char s[BUFLEN];
 	ssize_t n = ::read (fd, (void *)s, BUFLEN);
 	
+	if (n == -1) {
+	    int e = errno;
+	    cerr << "read(" << fd << ") error : " << strerror (e) << endl;
+	    return 0;
+	}
+
 	if (debug_transmit) {
 	    int i;
 	    clog << "fd=" << fd << "; ";
@@ -609,6 +615,7 @@ if (debug_lineread) {
 	    cerr << "read() returned 0. we may close the fd[" << fd << "] ????" << endl;
 	    reconnect_hook();
 	}
+	return (size_t) n;
     }
 
     void BufConnection::reconnect_hook (void) {
@@ -676,7 +683,8 @@ if (debug_dummyout) {
 	return 0;
     }
 
-    void BufConnection::write (void) {
+    size_t BufConnection::write (void) {
+	ssize_t nt = 0;
 	if (givenbuffer) {
 	    ssize_t size = pdummybuffer->length - wpos,
 		   nb;
@@ -687,9 +695,10 @@ if (debug_dummyout) {
 			cp->reqw (fd);
 		}
 		delete (pdummybuffer);
+		eow_hook ();
 		if (bufout.empty() && destroyatendofwrite)
 		    schedule_for_destruction ();
-		return;
+		return 0;
 	    }
 
 	    if (size > BUFLEN) {
@@ -699,7 +708,7 @@ if (debug_dummyout) {
 	    } else {
 		nb = size;
 	    }
-	    ssize_t nt = ::write (fd, pdummybuffer->start+wpos, nb);
+	    nt = ::write (fd, pdummybuffer->start+wpos, nb);
 	    if (nt != -1) {
 		wpos += nt;
 		if (nt != nb) {
@@ -725,10 +734,9 @@ if (debug_dummyout) {
 			cp->reqw (fd);
 		}
 		delete (pdummybuffer);
+		eow_hook ();
 		if (bufout.empty() && destroyatendofwrite)
 		    schedule_for_destruction ();
-		return;
-
 	    }
 // =================================================================================
 	} else {
@@ -740,10 +748,12 @@ if (debug_dummyout) {
 		    givenbufferiswaiting = false;
 		    if (cp != NULL)
 			cp->reqw (fd);
-		} else if (destroyatendofwrite) {
-		    schedule_for_destruction ();
+		} else {
+		    eow_hook ();
+		    if (destroyatendofwrite)
+			schedule_for_destruction ();
 		}
-		return;
+		return 0;
 	    }
 
 	    if (size > BUFLEN) {
@@ -753,7 +763,7 @@ if (debug_dummyout) {
 	    } else {
 		nb = size;
 	    }
-	    ssize_t nt = ::write (fd, bufout.c_str()+wpos, nb);
+	    nt = ::write (fd, bufout.c_str()+wpos, nb);
 	    if (nt != -1) {
 		wpos += nt;
 		if (nt != nb) {
@@ -778,11 +788,14 @@ if (debug_dummyout) {
 		    givenbufferiswaiting = false;
 		    if (cp != NULL)
 			cp->reqw (fd);
-		} else if (destroyatendofwrite) {
-		    schedule_for_destruction ();
+		} else {
+		    eow_hook ();
+		    if (destroyatendofwrite)
+			schedule_for_destruction ();
 		}
 	    }
 	}
+	return (nt > 0) ? nt : 0;
     }
 
 
@@ -1086,8 +1099,9 @@ if (debug_dummyout) {
 
     ListeningSocket::ListeningSocket (int fd) : Connection(fd) {}
 
-    void ListeningSocket::read (void) {
+    size_t ListeningSocket::read (void) {
 	addconnect (fd);
+	return 0;
     }
 
     ListeningSocket::ListeningSocket (int fd, const string & name) : Connection(fd) {
@@ -1098,7 +1112,7 @@ if (debug_dummyout) {
 	return name;
     }
 
-    void ListeningSocket::write (void) {}
+    size_t ListeningSocket::write (void) { return 0; }
 
     /*
      *  ---------------------------- all-purpose string (and more) utilities ---------------------------------

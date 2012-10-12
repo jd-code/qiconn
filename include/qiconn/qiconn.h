@@ -18,7 +18,7 @@
 #include <list>
 #include <map>
 
-#define QICONNPORT 1264	    // JDJDJDJD this one should be moved elsewhere
+// #define QICONNPORT 1264	    // JDJDJDJD this one should be moved elsewhere
 
 //! Maintaining a pool of closely watched tcp connections
 /*! The idea is to register as many object [JDJDJDJD be more precise here]
@@ -175,9 +175,14 @@ namespace qiconn
     class Connection
     {
 	friend class ConnectionPool;
+	private:
+	    virtual size_t read (void) = 0;
+	    virtual size_t write (void) = 0;
+
 	protected:
 	    int fd;
 	    ConnectionPool *cp;
+	    size_t totr, totw;
 
 	public:
 	    virtual ~Connection (void);
@@ -188,15 +193,22 @@ namespace qiconn
 	    inline Connection (int fd) {
 		Connection::fd = fd;
 		cp = NULL;
+		totr = 0, totw = 0;
 	    }
-	    virtual void read (void) = 0;
-	    virtual void write (void) = 0;
+	    inline void effread (void) {
+		totr += this->read();
+	    }
+	    inline void effwrite (void) {
+		totw += this->write();
+	    }
 	    virtual string getname (void) = 0;
 	    void register_into_pool (ConnectionPool *cp);
 	    void deregister_from_pool ();
 	    void close (void);
 	    void schedule_for_destruction (void);
 	    virtual void poll (void) = 0;
+	    inline size_t gettotw (void) const { return totw; }
+	    inline size_t gettotr (void) const { return totr; }
     };
 
     /*
@@ -303,16 +315,17 @@ namespace qiconn
 				   stringstream	*out;
 					virtual	~BufConnection (void);
 						BufConnection (int fd);
-				   virtual void	read (void);
+				 virtual size_t	read (void);
 				   virtual void	lineread (void) = 0;
 //				   virtual void	lineread (void) = 0;
 					   void setrawmode (void);
 					   void setlinemode (void);
 					   void	flush (void);
 					   void	flushandclose (void);
-				   virtual void	write (void);
+				 virtual size_t	write (void);
 				   virtual void poll (void) {}
 				   virtual void reconnect_hook (void);
+				   virtual void	eow_hook (void) {}
 					    int pushdummybuffer (DummyBuffer* pdb);
     };
 
@@ -399,8 +412,8 @@ namespace qiconn
 				    ListeningSocket (int fd, const string & name);
 	   virtual SocketConnection* connection_binder (int fd, struct sockaddr_in const &client_addr) = 0;
 		     virtual string getname (void);
-		       virtual void read (void);
-		       virtual void write (void);
+		     virtual size_t read (void);
+		     virtual size_t write (void);
     };
     
     /*
