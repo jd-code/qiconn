@@ -71,12 +71,35 @@ namespace qiconn
 	}
 
 	int s;
+#ifdef SOCK_CLOEXEC
 	s = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+#else
+	s = socket(AF_INET, SOCK_STREAM, 0);
+#endif
 	if (s == -1) {
 	    int e = errno;
 	    cerr << "could not create socket (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
 	    return -1;
 	}
+#ifndef SOCK_CLOEXEC
+	{
+	long s_flags = 0;
+	if (fcntl (s, F_GETFD, s_flags) == -1) {
+	    int e = errno;
+	    cerr << "could not get socket flags (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    close (s);
+	    return -1;
+	}
+
+	s_flags |= FD_CLOEXEC;
+	if (fcntl (s, F_SETFD, s_flags)  == -1) {
+	    int e = errno;
+	    cerr << "could not set socket flags with FD_CLOEXEC (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    close (s);
+	    return -1;
+	}
+	}
+#endif
 
 	{	int yes = 1;
 	    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (yes)) != 0) {
@@ -144,7 +167,11 @@ namespace qiconn
 	}
 
 	if (debug_connect) cerr << "init_connect -> socket (PF_INET, SOCK_STREAM, tcp)" << endl;
+#ifdef SOCK_CLOEXEC
 	int s = socket(PF_INET, SOCK_STREAM | SOCK_CLOEXEC, pe->p_proto);
+#else
+	int s = socket(PF_INET, SOCK_STREAM,                pe->p_proto);
+#endif
 	if (s == -1) {
 	    int e = errno;
 	    cerr << "could not create socket (for connection to " << fqdn << ":" << port << ") : " << strerror (e) << endl ;
@@ -166,6 +193,25 @@ namespace qiconn
 	    close (s);
 	    return -1;
 	}
+#ifndef SOCK_CLOEXEC
+	{
+	long s_flags = 0;
+	if (fcntl (s, F_GETFD, s_flags) == -1) {
+	    int e = errno;
+	    cerr << "could not get socket desc flags (for connection to " << fqdn << ":" << port << ") : " << strerror (e) << endl ;
+	    close (s);
+	    return -1;
+	}
+
+	s_flags |= FD_CLOEXEC;
+	if (fcntl (s, F_SETFD, s_flags)  == -1) {
+	    int e = errno;
+	    cerr << "could not set socket desc flags with FD_CLOEXEC (for connection to " << fqdn << ":" << port << ") : " << strerror (e) << endl ;
+	    close (s);
+	    return -1;
+	}
+	}
+#endif
 	
 	if (debug_connect) cerr << "init_connect -> socket (PF_INET, SOCK_STREAM, tcp)" << endl;
 
@@ -1065,12 +1111,36 @@ if (debug_dummyout) {
     int ListeningSocket::addconnect (int socket) {
 	struct sockaddr_in client_addr;
 	socklen_t size_addr = sizeof(client_addr);
+#ifdef SOCK_CLOEXEC
 	int f = accept4 ( socket, (struct sockaddr *) &client_addr, &size_addr, SOCK_CLOEXEC );
+#else
+	int f = accept  ( socket, (struct sockaddr *) &client_addr, &size_addr);
+#endif
 	if (f < 0) {
 	    int e = errno;
 	    cerr << "could not accept connection : " << strerror (e) << endl ;
 	    return -1;
 	}
+#ifndef SOCK_CLOEXEC
+	{
+	long s_flags = 0;
+	if (fcntl (f, F_GETFD, s_flags) == -1) {
+	    int e = errno;
+	    cerr << "could not get socket flags (for accepting connections) : " << strerror (e) << endl ;
+	    ::close (f);
+	    return -1;
+	}
+
+	s_flags |= FD_CLOEXEC;
+	if (fcntl (f, F_SETFD, s_flags)  == -1) {
+	    int e = errno;
+	    cerr << "could not set socket flags with FD_CLOEXEC (for accepting connections) : " << strerror (e) << endl ;
+	    ::close (f);
+	    return -1;
+	}
+	}
+#endif
+
 	cerr << "new connection from fd[" << f << ":" << client_addr << "]" << endl;
 	if (cp != NULL) {
 	    SocketConnection * pdc = connection_binder (f, client_addr);
