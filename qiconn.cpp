@@ -1165,6 +1165,25 @@ if (debug_dummyout) {
 	}
 #endif
 
+	{
+	long s_flags = 0;
+	if (fcntl (f, F_GETFL, s_flags) == -1) {
+	    int e = errno;
+	    cerr << "could not get socket flags (for accepting connections) : " << strerror (e) << endl ;
+	    ::close (f);
+	    return -1;
+	}
+
+	s_flags |= O_NONBLOCK;
+	if (fcntl (f, F_SETFL, s_flags)  == -1) {
+	    int e = errno;
+	    cerr << "could not set socket flags with O_NONBLOCK (for accepting connections) : " << strerror (e) << endl ;
+	    ::close (f);
+	    return -1;
+	}
+	}
+
+
 	cerr << "new connection from fd[" << f << ":" << client_addr << "]" << endl;
 	if (cp != NULL) {
 	    SocketConnection * pdc = connection_binder (f, client_addr);
