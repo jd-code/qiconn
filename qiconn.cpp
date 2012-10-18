@@ -110,6 +110,7 @@ namespace qiconn
 	}
 
 
+if (0)
 {
     int buflen;
     socklen_t param_len = sizeof(buflen);
@@ -513,8 +514,8 @@ cout << "############### buflen = " << buflen << endl;
 	    for (i=0 ; i<biggest_fd ; i++) {
 		// the same should be done here same here JDJDJD
 		if (FD_ISSET(i, &cw_fd)) {
-		    connections[i]->effwrite();
 		    FD_CLR (i, &w_fd);
+		    connections[i]->effwrite();
 		}
 	    }
 	}
