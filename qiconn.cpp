@@ -496,7 +496,7 @@ cout << "############### buflen = " << buflen << endl;
 	       cw_fd = w_fd;
 	select (biggest_fd, &cr_fd, &cw_fd, NULL, timeout);
 
-	FD_ZERO (&w_fd);
+//	FD_ZERO (&w_fd);    // JDJDJDJD replaced below by more accurate FD_CLR
 
 	if (caught_signal)
 	    treat_signal ();
@@ -512,8 +512,10 @@ cout << "############### buflen = " << buflen << endl;
 	    }
 	    for (i=0 ; i<biggest_fd ; i++) {
 		// the same should be done here same here JDJDJD
-		if (FD_ISSET(i, &cw_fd))
+		if (FD_ISSET(i, &cw_fd)) {
 		    connections[i]->effwrite();
+		    FD_CLR (i, &w_fd);
+		}
 	    }
 	}
 	if (exitselect)
