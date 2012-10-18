@@ -130,6 +130,14 @@ cout << "############### buflen = " << buflen << endl;
 	return -1;
     }
 
+    int clamp = 64*1024;
+    if (setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
+	int e = errno;
+	cerr << "could not setsockopt TCP_WINDOW_CLAMP (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	return -1;
+    }
+
+
 // ------------------ TCP_MAXSEG
 ////    if (getsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, &param_len) != 0) {
 ////	int e = errno;
@@ -146,12 +154,12 @@ cout << "############### buflen = " << buflen << endl;
 
 
 
-//    int flag = 1;
-//    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
-//	int e = errno;
-//	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-//	return -1;
-//    }
+    int flag = 1;
+    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+	int e = errno;
+	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	return -1;
+    }
 
 ////    int flag = 0;
 ////    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
@@ -1221,7 +1229,7 @@ cout << "fd[" << fd << "] || corking" << endl;
 	long s_flags = 0;
 	if (fcntl (f, F_GETFD, s_flags) == -1) {
 	    int e = errno;
-	    cerr << "could not get socket flags (for accepting connections) : " << strerror (e) << endl ;
+	    cerr << "could not get socket flags (for accepting connection) : " << strerror (e) << endl ;
 	    ::close (f);
 	    return -1;
 	}
@@ -1229,18 +1237,30 @@ cout << "fd[" << fd << "] || corking" << endl;
 	s_flags |= FD_CLOEXEC;
 	if (fcntl (f, F_SETFD, s_flags)  == -1) {
 	    int e = errno;
-	    cerr << "could not set socket flags with FD_CLOEXEC (for accepting connections) : " << strerror (e) << endl ;
+	    cerr << "could not set socket flags with FD_CLOEXEC (for accepting connection) : " << strerror (e) << endl ;
 	    ::close (f);
 	    return -1;
 	}
 	}
 #endif
+{
+    int flag = 1;
+    if (setsockopt(f, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+	int e = errno;
+	cerr << "could not setsockopt TCP_NODELAY=1 (for accepting connection) : " << strerror (e) << endl ;
+    }
 
+    int clamp = 64*1024;
+    if (setsockopt (f, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
+	int e = errno;
+	cerr << "could not setsockopt TCP_WINDOW_CLAMP (for accepting connection) : " << strerror (e) << endl ;
+    }
+}
 	{
 	long s_flags = 0;
 	if (fcntl (f, F_GETFL, s_flags) == -1) {
 	    int e = errno;
-	    cerr << "could not get socket flags (for accepting connections) : " << strerror (e) << endl ;
+	    cerr << "could not get socket flags (for accepting connection) : " << strerror (e) << endl ;
 	    ::close (f);
 	    return -1;
 	}
@@ -1248,7 +1268,7 @@ cout << "fd[" << fd << "] || corking" << endl;
 	s_flags |= O_NONBLOCK;
 	if (fcntl (f, F_SETFL, s_flags)  == -1) {
 	    int e = errno;
-	    cerr << "could not set socket flags with O_NONBLOCK (for accepting connections) : " << strerror (e) << endl ;
+	    cerr << "could not set socket flags with O_NONBLOCK (for accepting connection) : " << strerror (e) << endl ;
 	    ::close (f);
 	    return -1;
 	}
