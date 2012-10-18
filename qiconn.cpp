@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -101,7 +102,7 @@ namespace qiconn
 	}
 #endif
 
-	{	int yes = 1;
+	{   int yes = 1;
 	    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (yes)) != 0) {
 		int e = errno;
 		cerr << "could not setsockopt (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
@@ -110,10 +111,12 @@ namespace qiconn
 	}
 
 
-if (0)
+
 {
     int buflen;
     socklen_t param_len = sizeof(buflen);
+
+// ------------------ SO_SNDBUF
     if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	int e = errno;
 	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
@@ -126,11 +129,44 @@ cout << "############### buflen = " << buflen << endl;
 	cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
-    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
-	int e = errno;
-	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-	return -1;
-    }
+
+// ------------------ TCP_MAXSEG
+////    if (getsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, &param_len) != 0) {
+////	int e = errno;
+////	cerr << "could not getsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	return -1;
+////    }
+////cout << "############### tcp_maxseg = " << buflen << endl;
+////    buflen = 1500;
+////    if (setsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, sizeof(buflen)) != 0) {
+////	int e = errno;
+////	cerr << "could not setsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	return -1;
+////    }
+
+
+
+//    int flag = 1;
+//    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+//	int e = errno;
+//	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+//	return -1;
+//    }
+
+////    int flag = 0;
+////    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+////	int e = errno;
+////	cerr << "could not setsockopt TCP_NODELAY=0 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	return -1;
+////    }
+
+
+
+if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+    int e = errno;
+    cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+    return -1;
+}
 cout << "############### buflen = " << buflen << endl;
 }
 
@@ -377,8 +413,17 @@ cout << "############### buflen = " << buflen << endl;
 
 
     SocketConnection::SocketConnection (int fd, struct sockaddr_in const &client_addr)
-	: BufConnection (fd)
+	: BufConnection (fd, true)
     {
+{
+    int buflen;
+    socklen_t param_len = sizeof(buflen);
+    if (getsockopt (fd, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+	int e = errno;
+	cerr << "could not getsockopt SO_SNDBUF (for SocketConnections " << client_addr << ") : " << strerror (e) << endl ;
+    } else
+	cout << "SocketConnection::SocketConnection " << client_addr << " " << buflen << endl;
+}
 	setname (client_addr);
     }
 
@@ -608,11 +653,11 @@ cout << "############### buflen = " << buflen << endl;
      *  ---------------------------- BufConnection : let's put some line buffering on top of Connection
      */
 
-    #define BUFLEN 1024
+    #define BUFLEN 32768
     BufConnection::~BufConnection (void) {
     };
 
-    BufConnection::BufConnection (int fd) : Connection (fd) {
+    BufConnection::BufConnection (int fd, bool issocket) : Connection (fd, issocket) {
 	raw = false;
 	pdummybuffer = NULL;
 	givenbuffer = false;
@@ -736,6 +781,29 @@ if (debug_dummyout) {
 	out = new stringstream ();
     }
 
+
+    void BufConnection::eow_hook (void) {
+	if (issocket) {
+cout << "fd[" << fd << "] >> uncorking" << endl;
+	    int flag = 0;		// JDJDJDJD uncork
+	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
+	        int e = errno;
+	        cerr << "could not setsockopt TCP_CORK=0 (for bufconnections " << fd << ") : " << strerror (e) << endl ;
+	    }
+	}
+    }
+
+    void BufConnection::cork (void) {
+	if (issocket) {
+cout << "fd[" << fd << "] || corking" << endl;
+	    int flag = 1;		// JDJDJDJD uncork
+	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
+	        int e = errno;
+	        cerr << "could not setsockopt TCP_CORK=1 (for bufconnections " << fd << ") : " << strerror (e) << endl ;
+	    }
+	}
+    }
+
     void BufConnection::flushandclose(void) {
 	destroyatendofwrite = true;
 	flush();
@@ -768,7 +836,7 @@ if (debug_dummyout) {
 			cp->reqw (fd);
 		}
 		delete (pdummybuffer);
-		eow_hook ();
+		reachedeow = true;
 		if (bufout.empty() && destroyatendofwrite)
 		    schedule_for_destruction ();
 		return 0;
@@ -807,7 +875,7 @@ if (debug_dummyout) {
 			cp->reqw (fd);
 		}
 		delete (pdummybuffer);
-		eow_hook ();
+		reachedeow = true;
 		if (bufout.empty() && destroyatendofwrite)
 		    schedule_for_destruction ();
 	    }
@@ -822,7 +890,7 @@ if (debug_dummyout) {
 		    if (cp != NULL)
 			cp->reqw (fd);
 		} else {
-		    eow_hook ();
+		    reachedeow = true;
 		    if (destroyatendofwrite)
 			schedule_for_destruction ();
 		}
@@ -862,7 +930,7 @@ if (debug_dummyout) {
 		    if (cp != NULL)
 			cp->reqw (fd);
 		} else {
-		    eow_hook ();
+		    reachedeow = true;
 		    if (destroyatendofwrite)
 			schedule_for_destruction ();
 		}
@@ -1213,14 +1281,14 @@ if (debug_dummyout) {
 	ListeningSocket::name = name;
     }
 
-    ListeningSocket::ListeningSocket (int fd) : Connection(fd) {}
+    ListeningSocket::ListeningSocket (int fd) : Connection(fd, true) {}
 
     size_t ListeningSocket::read (void) {
 	addconnect (fd);
 	return 0;
     }
 
-    ListeningSocket::ListeningSocket (int fd, const string & name) : Connection(fd) {
+    ListeningSocket::ListeningSocket (int fd, const string & name) : Connection(fd, true) {
 	setname (name);
     }
 

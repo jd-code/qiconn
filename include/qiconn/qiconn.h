@@ -181,8 +181,10 @@ namespace qiconn
 
 	protected:
 	    int fd;
-	    ConnectionPool *cp;
-	    size_t totr, totw;
+           bool issocket;
+ ConnectionPool *cp;
+	 size_t totr, totw;
+	   bool reachedeow;
 
 	public:
 	    virtual ~Connection (void);
@@ -190,16 +192,24 @@ namespace qiconn
 	    //      fd = -1;
 	    //      cp = NULL;
 	    //  }
-	    inline Connection (int fd) {
-		Connection::fd = fd;
-		cp = NULL;
-		totr = 0, totw = 0;
-	    }
+	    inline Connection (int fd, bool issocket = false) :
+		fd(fd),
+		issocket(issocket),
+		cp(NULL),
+		totr (0),
+		totw (0),
+		reachedeow (false)
+	    {}
+	    virtual void eow_hook (void) {}
 	    inline void effread (void) {
 		totr += this->read();
 	    }
 	    inline void effwrite (void) {
 		totw += this->write();
+		if (reachedeow) {
+		    this->eow_hook();
+		    reachedeow = false;
+		}
 	    }
 	    virtual string getname (void) = 0;
 	    void register_into_pool (ConnectionPool *cp);
@@ -314,18 +324,19 @@ namespace qiconn
 	public:
 				   stringstream	*out;
 					virtual	~BufConnection (void);
-						BufConnection (int fd);
+						BufConnection (int fd, bool issocket = false);
 				 virtual size_t	read (void);
 				   virtual void	lineread (void) = 0;
 //				   virtual void	lineread (void) = 0;
 					   void setrawmode (void);
 					   void setlinemode (void);
 					   void	flush (void);
+					   void	cork (void);
+	    			   virtual void eow_hook (void);
 					   void	flushandclose (void);
 				 virtual size_t	write (void);
 				   virtual void poll (void) {}
 				   virtual void reconnect_hook (void);
-				   virtual void	eow_hook (void) {}
 					    int pushdummybuffer (DummyBuffer* pdb);
     };
 
