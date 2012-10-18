@@ -109,6 +109,30 @@ namespace qiconn
 	    }
 	}
 
+
+{
+    int buflen;
+    socklen_t param_len = sizeof(buflen);
+    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+	int e = errno;
+	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	return -1;
+    }
+cout << "############### buflen = " << buflen << endl;
+    buflen = 128*1024;
+    if (setsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, sizeof(buflen)) != 0) {
+	int e = errno;
+	cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	return -1;
+    }
+    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+	int e = errno;
+	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	return -1;
+    }
+cout << "############### buflen = " << buflen << endl;
+}
+
 	if (bind (s, (struct sockaddr *)&serv_addr, sizeof (serv_addr)) != 0) {
 	    int e = errno;
 	    cerr << "could not bind socket (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
@@ -1145,7 +1169,7 @@ if (debug_dummyout) {
 	if (cp != NULL) {
 	    SocketConnection * pdc = connection_binder (f, client_addr);
 	    if (pdc == NULL) {
-		cerr << "error: could not add connection : failed to allocate DummyConnection" << endl;
+		cerr << "error: could not add connection : failed to allocate SocketConnection" << endl;
 		return -1;
 	    }
 	    cp->push (pdc);
