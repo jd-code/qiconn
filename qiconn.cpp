@@ -666,6 +666,7 @@ cout << "############### buflen = " << buflen << endl;
     };
 
     BufConnection::BufConnection (int fd, bool issocket) : Connection (fd, issocket) {
+	corking = false;
 	raw = false;
 	pdummybuffer = NULL;
 	givenbuffer = false;
@@ -791,7 +792,7 @@ if (debug_dummyout) {
 
 
     void BufConnection::eow_hook (void) {
-	if (issocket) {
+	if (corking && issocket) {
 cout << "fd[" << fd << "] >> uncorking" << endl;
 	    int flag = 0;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
@@ -802,7 +803,8 @@ cout << "fd[" << fd << "] >> uncorking" << endl;
     }
 
     void BufConnection::cork (void) {
-	if (issocket) {
+#ifdef CORKING
+	if (corking && issocket) {
 cout << "fd[" << fd << "] || corking" << endl;
 	    int flag = 1;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
@@ -810,6 +812,7 @@ cout << "fd[" << fd << "] || corking" << endl;
 	        cerr << "could not setsockopt TCP_CORK=1 (for bufconnections " << fd << ") : " << strerror (e) << endl ;
 	    }
 	}
+#endif
     }
 
     void BufConnection::flushandclose(void) {

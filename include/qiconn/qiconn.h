@@ -317,6 +317,7 @@ namespace qiconn
 					 size_t	wpos;
 					   bool raw;
 	protected:
+					   bool corking;
 				   DummyBuffer*	pdummybuffer;
 					   bool	givenbuffer;
 					   bool givenbufferiswaiting;
