@@ -18,7 +18,6 @@
 #include <list>
 #include <map>
 
-// #define QICONNPORT 1264	    // JDJDJDJD this one should be moved elsewhere
 
 //! Maintaining a pool of closely watched tcp connections
 /*! The idea is to register as many object [JDJDJDJD be more precise here]
