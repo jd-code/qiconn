@@ -801,7 +801,7 @@ if (debug_dummyout) {
 
     void BufConnection::eow_hook (void) {
 	if (corking && issocket) {
-cout << "fd[" << fd << "] >> uncorking" << endl;
+if (debug_corking) cout << "fd[" << fd << "] >> uncorking" << endl;
 	    int flag = 0;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
 	        int e = errno;
@@ -812,7 +812,7 @@ cout << "fd[" << fd << "] >> uncorking" << endl;
 
     void BufConnection::cork (void) {
 	if (corking && issocket) {
-cout << "fd[" << fd << "] || corking" << endl;
+if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	    int flag = 1;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
 	        int e = errno;

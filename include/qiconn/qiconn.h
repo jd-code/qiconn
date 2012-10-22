@@ -41,6 +41,7 @@ namespace qiconn
     QICONN_H_SCOPE bool debug_dummyout = false;	    //!< debug output of dummyconn
     QICONN_H_SCOPE bool debug_syncflush = false;    //!< debug flushing at sync
     QICONN_H_SCOPE bool debug_fddestr = false;	    //!< debug connection (fd) destructions
+    QICONN_H_SCOPE bool debug_corking = false;	    //!< debug connection corking
 #else                                                  
     QICONN_H_SCOPE bool debug_resolver;		    //!< debug init_connect resolver
     QICONN_H_SCOPE bool debug_connect;		    //!< debug init_connect steps
@@ -50,6 +51,7 @@ namespace qiconn
     QICONN_H_SCOPE bool debug_dummyout;		    //!< debug output of dummyconn
     QICONN_H_SCOPE bool debug_syncflush;	    //!< debug flushing at sync
     QICONN_H_SCOPE bool debug_fddestr;		    //!< debug connection (fd) destructions
+    QICONN_H_SCOPE bool debug_corking;		    //!< debug connection corking
 #endif
 
     inline int millidiff (struct timeval const&a, struct timeval const&b) {
