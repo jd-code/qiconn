@@ -130,7 +130,7 @@ namespace qiconn
 	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
-cout << "############### buflen = " << buflen << endl;
+//cout << "############### buflen = " << buflen << endl;
     buflen = 128*1024;
     if (setsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, sizeof(buflen)) != 0) {
 	int e = errno;
@@ -183,7 +183,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
     return -1;
 }
-cout << "############### buflen = " << buflen << endl;
+//cout << "############### buflen = " << buflen << endl;
 }
 
 	if (bind (s, (struct sockaddr *)&serv_addr, sizeof (serv_addr)) != 0) {
@@ -438,7 +438,7 @@ cout << "############### buflen = " << buflen << endl;
 	int e = errno;
 	cerr << "could not getsockopt SO_SNDBUF (for SocketConnections " << client_addr << ") : " << strerror (e) << endl ;
     } else
-	cout << "SocketConnection::SocketConnection " << client_addr << " " << buflen << endl;
+	if (debug_newconnect) cout << "SocketConnection::SocketConnection " << client_addr << " " << buflen << endl;
 }
 	setname (client_addr);
     }
@@ -477,7 +477,7 @@ cout << "############### buflen = " << buflen << endl;
 //	    }
 	    return 1;
 	} else {
-	    cerr << "signal [" << sig << "] handled." << endl;
+//	    cerr << "signal [" << sig << "] handled." << endl;
 	    return 0;
 	}
     }
@@ -1284,7 +1284,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	}
 
 
-	cerr << "new connection from fd[" << f << ":" << client_addr << "]" << endl;
+	if (debug_newconnect) cerr << "new connection from fd[" << f << ":" << client_addr << "]" << endl;
 	if (cp != NULL) {
 	    SocketConnection * pdc = connection_binder (f, client_addr);
 	    if (pdc == NULL) {
