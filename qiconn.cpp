@@ -747,7 +747,7 @@ if (debug_lineread) {
 	    bufin = "";
 	}
 	if (n==0) {
-	    cerr << "read() returned 0. we may close the fd[" << fd << "] ????" << endl;
+	    if (debug_newconnect) cerr << "read() returned 0. we may close the fd[" << fd << "] ????" << endl;
 	    reconnect_hook();
 	}
 	return (size_t) n;
