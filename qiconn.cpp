@@ -461,7 +461,8 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     int caught_signal;
 
     void signal_handler (int sig) {
-	printf ("got signal %d\n", sig);
+// printf ("got signal %d\n", sig);    // JDJDJDJD this should be cleaned !!!
+// fprintf (stderr, "got signal %d\n", sig);    // JDJDJDJD this should be cleaned !!!
 	caught_signal ++;
 	if ((sig > 0) && (sig<254))
 	    pend_signals[sig]++;
@@ -598,12 +599,30 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     }
 
     void ConnectionPool::closeall (void) {
-	MConnections::reverse_iterator rmi;
+if (true) {
+	MConnections::iterator mi;
 	cerr << "entering ConnectionPool::closeall..." << endl;
-	for (rmi=connections.rbegin() ; rmi!=connections.rend() ; rmi++) {
-	    rmi->second->close();
+	for (mi=connections.begin() ; mi!=connections.end() ; ) {
+	    MConnections::iterator mj = mi;
+	    mi ++;
+	    mj->second->close();
 	}
 	cerr << "...done." << endl;
+	    
+} else {    // this is the former code, it appears that going backward
+	    // with iterator while deleting doesn't work ...
+
+	MConnections::reverse_iterator rmi;
+	cerr << "entering ConnectionPool::closeall..." << endl;
+	for (rmi=connections.rbegin() ; rmi!=connections.rend() ; ) {
+	    MConnections::reverse_iterator rmj = rmi;	// we do this because Connection::close deregisters from the map !
+	    rmi ++;
+cerr << "closing " << rmj->second->getname() << endl;
+	    rmj->second->close();
+cerr << "done." << endl << endl;
+	}
+	cerr << "...done." << endl;
+}
     }
 
     void ConnectionPool::destroyall (void) {
