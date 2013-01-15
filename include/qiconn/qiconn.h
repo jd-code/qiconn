@@ -185,6 +185,7 @@ namespace qiconn
 	protected:
 	    int fd;
            bool issocket;
+	   bool isclosedalready;
  ConnectionPool *cp;
 	 size_t totr, totw;
 	   bool reachedeow;
@@ -198,6 +199,7 @@ namespace qiconn
 	    inline Connection (int fd, bool issocket = false) :
 		fd(fd),
 		issocket(issocket),
+		isclosedalready(false),
 		cp(NULL),
 		totr (0),
 		totw (0),
@@ -324,8 +326,8 @@ namespace qiconn
 				   DummyBuffer*	pdummybuffer;
 					   bool	givenbuffer;
 					   bool givenbufferiswaiting;
-					 string	bufin;
 	public:
+					 string	bufin;
 				   stringstream	*out;
 					virtual	~BufConnection (void);
 						BufConnection (int fd, bool issocket = false);
