@@ -392,10 +392,12 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     void Connection::close (void) {
 	deregister_from_pool ();
 	if (fd >= 0) {
+	    if (isclosedalready) return;
 	    if (::close(fd) != 0) {
 		int e = errno;
 		cerr << "error closing fd[" << fd << "] : " << strerror(e) << endl ;
-	    }
+	    } else
+		isclosedalready = true;
 	}
     }
 
