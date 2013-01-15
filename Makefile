@@ -31,10 +31,11 @@ libqiconn.so: qiconn_dyn.o
 
 clean:
 	rm -f *.o *.a *.so
+	rm -rf qiconn-doc
 
 distclean: clean
 
-doc: *.h *.cpp bulkrays.dox
+doc: include/qiconn/*.h *.cpp qiconn.dox
 	doxygen qiconn.dox
 
 .PHONY: clean
