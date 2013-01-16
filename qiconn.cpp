@@ -514,6 +514,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	biggest_fd = 0;
 	exitselect = false;
 	scheddest = false;
+	FD_ZERO (&w_fd);
     }
 
 
@@ -592,7 +593,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     int ConnectionPool::select_loop (const struct timeval & timeout) {
 	struct timeval t_out = timeout;
 	build_r_fd ();
-	FD_ZERO (&w_fd);
+//	FD_ZERO (&w_fd);    that was a bug to erase here ... erase at construction rather ...
 
 	while (select_poll(&t_out) == 0)  {
 	    t_out = timeout;
