@@ -159,7 +159,29 @@ namespace qiconn
 		    return fqdn < fp.fqdn ;
 	    }
     };
+
+    typedef enum {
+	once,
+	forever
+    } TOccurences;
+
+
+    class Connection;
     
+    class SPollEvent {
+	public:
+	    TOccurences occurence;
+	    Connection * pconn;
+	    time_t delay;
+	    int jitter;
+	    SPollEvent (TOccurences occurence, Connection * pconn, time_t delay, int jitter) :
+		occurence(occurence),
+		pconn(pconn),
+		delay(delay),
+		jitter(jitter)
+	    {}
+    };
+
     /*
      *  ---------------------------- Connectionl : handles an incoming connection from fd --------------------
      */
@@ -189,6 +211,7 @@ namespace qiconn
  ConnectionPool *cp;
 	 size_t totr, totw;
 	   bool reachedeow;
+	    int spollchedulled;		//!< how many occurences of schedulled-poll are schedulled ?
 
 	public:
 	    virtual ~Connection (void);
@@ -203,7 +226,8 @@ namespace qiconn
 		cp(NULL),
 		totr (0),
 		totw (0),
-		reachedeow (false)
+		reachedeow (false),
+		spollchedulled (0)
 	    {}
 	    virtual void eow_hook (void) {}
 	    inline void effread (void) {
@@ -222,6 +246,7 @@ namespace qiconn
 	    void close (void);
 	    void schedule_for_destruction (void);
 	    virtual void poll (void) = 0;
+	    virtual void schedpoll (void) {}
 	    inline size_t gettotw (void) const { return totw; }
 	    inline size_t gettotr (void) const { return totr; }
     };
@@ -266,6 +291,8 @@ namespace qiconn
 	protected:
 	    bool exitselect;
 	    virtual void treat_signal (void);
+	    time_t tnextspoll;
+	    multimap <time_t, SPollEvent> spollsched;  //! the spoll schedule
 
 
 	public:
@@ -277,6 +304,10 @@ namespace qiconn
 	    inline void tikkle (void) { exitselect = true; }
 	    
 	    void schedule_for_destruction (Connection * c);
+
+	    bool schedule_next_spoll (Connection * c, time_t delay, TOccurences, int jitter = 0);
+	    void checklaunchspoll (void);
+	    void unschedule_spoll (MConnections::iterator mi);
 
 	    virtual int select_poll (struct timeval *timeout);
 

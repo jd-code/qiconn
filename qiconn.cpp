@@ -515,6 +515,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	exitselect = false;
 	scheddest = false;
 	FD_ZERO (&w_fd);
+	tnextspoll = 0;
     }
 
 
@@ -543,6 +544,67 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	}
 	destroy_schedule.push_back(c);
 	scheddest = true;
+    }
+
+    bool ConnectionPool::schedule_next_spoll (Connection * c, time_t when, TOccurences occurence, int jitter /* = 0 */) {
+	if (c == NULL) return false;
+	if (when < 2) when = 2;
+	time_t now = time(NULL);
+// JDJDJDJD JITTER MISSING
+	spollsched.insert (pair<time_t, SPollEvent> (now+when, SPollEvent(occurence, c, when, jitter)));
+//	spollsched.emplace (now+when, occurence, c, when, jitter);
+//	spollsched [now+when] = SPollEvent (occurence, c, when, jitter);
+	c->spollchedulled ++;
+	time_t min_nextspoll = spollsched.begin()->first;
+	if (min_nextspoll < tnextspoll)
+	    tnextspoll = min_nextspoll;
+	return true;
+    }
+
+
+    void ConnectionPool::unschedule_spoll (MConnections::iterator mci) {
+	Connection *c = mci->second;
+	multimap <time_t, SPollEvent>::iterator mi, mj;
+	for (   mi = spollsched.begin() ;
+		(mi != spollsched.end()) && (c->spollchedulled >0) ;
+	    ) {
+	    mj = mi;
+	    mi++;
+	    if (mj->second.pconn == c) {
+		spollsched.erase (mj);
+		c->spollchedulled --;
+	    }
+	}
+    }
+
+    void ConnectionPool::checklaunchspoll (void) {
+	time_t now = time(NULL);
+	if (now < tnextspoll) return;
+	multimap <time_t, SPollEvent>::iterator mi, mj;
+
+	for (	mi = spollsched.begin() ;
+		(mi != spollsched.end()) && (mi->first <=now) ;
+	    ) {
+	    mi->second.pconn->schedpoll ();
+	    
+	    time_t after = time(NULL);
+
+	    mj = mi;
+	    mi++;
+	    if (mi->second.occurence == forever) {
+// JDJDJDJD JITTER MISSING
+	spollsched.insert (pair<time_t, SPollEvent> (after+mi->second.delay, SPollEvent(mi->second.occurence, mi->second.pconn, mi->second.delay, mi->second.jitter)));
+//	spollsched.emplace (now+when, occurence, c, when, jitter);
+//	spollsched [now+when] = SPollEvent (occurence, c, when, jitter);
+	    }
+	
+	    mj->second.pconn->spollchedulled --;
+	    spollsched.erase (mj);
+	}
+	if (spollsched.empty())
+	    tnextspoll = 0;
+	else
+	    tnextspoll = spollsched.begin()->first;
     }
 
     int ConnectionPool::select_poll (struct timeval *timeout) {
@@ -583,6 +645,8 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 		    connections[i]->effwrite();
 		}
 	    }
+	    if (tnextspoll > 0)
+		checklaunchspoll ();
 	}
 	if (exitselect)
 	    return 1;
@@ -641,6 +705,11 @@ cerr << "done." << endl << endl;
 	closeall ();
     }
 
+
+    //! pushes some Connection into the map of active connection via this ConnectionPool
+    //! if the Connection fd is negative, the fd is changed to a unique negative 
+    //! suitable value
+    
     void ConnectionPool::push (Connection *c) {
 	if (c->cp == NULL) {
 	    c->cp = this;
@@ -648,7 +717,9 @@ cerr << "done." << endl << endl;
 	    cerr << "warning: connection[" << c->fd << ":" << c->getname() << "] already commited to another cp !" << endl;
 	    return;
 	}
-	if (c->fd == -1) {  // we're setting a pending connection...
+	if (c->fd < 0) {  // we're setting a pending connection...
+//WAS:	if (c->fd == -1) {  // we're setting a pending connection...
+
 // cerr << "ici" << endl;
 	    if (connections.empty()) {
 // cerr << "set -2 because empty" << endl;
@@ -678,6 +749,14 @@ cerr << "done." << endl << endl;
     void ConnectionPool::pull (Connection *c) {
 	MConnections::iterator mi = connections.find (c->fd);
 	if (mi != connections.end()) {
+	    if (c->spollchedulled > 0) {
+		unschedule_spoll (mi);
+		if (c->spollchedulled > 0) {
+		    cerr << "warning: connection[" << c->getname() << ", fd=" << c->fd << "] "
+			"still has some spool count after de-spollscheduling : spollchedulled="
+			 << c->spollchedulled << endl;
+		}
+	    }
 	    connections.erase (mi);
 	    set_biggest ();
 	    build_r_fd ();
