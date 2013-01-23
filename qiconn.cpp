@@ -551,13 +551,17 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	if (c == NULL) return false;
 	if (when < 2) when = 2;
 	time_t now = time(NULL);
+	time_t jit = (int)(((jitter * when) / 100) * ((double)rand())/RAND_MAX);
+
 // JDJDJDJD JITTER MISSING
-	spollsched.insert (pair<time_t, SPollEvent> (now+when, SPollEvent(occurence, c, when, jitter)));
+	spollsched.insert (pair<time_t, SPollEvent> (now+when+jit, SPollEvent(occurence, c, when, jitter)));
 //	spollsched.emplace (now+when, occurence, c, when, jitter);
 //	spollsched [now+when] = SPollEvent (occurence, c, when, jitter);
 	c->spollchedulled ++;
 	time_t min_nextspoll = spollsched.begin()->first;
-	if (min_nextspoll < tnextspoll)
+	if (tnextspoll == 0)
+	    tnextspoll = min_nextspoll;
+	else if (min_nextspoll < tnextspoll)
 	    tnextspoll = min_nextspoll;
 	return true;
     }
@@ -588,17 +592,17 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	    ) {
 	    mi->second.pconn->schedpoll ();
 	    
-	    time_t after = time(NULL);
-
 	    mj = mi;
-	    mi++;
-	    if (mi->second.occurence == forever) {
-// JDJDJDJD JITTER MISSING
-	spollsched.insert (pair<time_t, SPollEvent> (after+mi->second.delay, SPollEvent(mi->second.occurence, mi->second.pconn, mi->second.delay, mi->second.jitter)));
-//	spollsched.emplace (now+when, occurence, c, when, jitter);
-//	spollsched [now+when] = SPollEvent (occurence, c, when, jitter);
+	    if (mj->second.occurence == forever) {
+		time_t after = time(NULL);
+		int jitter = mi->second.jitter;
+		time_t when = mi->second.delay;
+		time_t jit = (int)(((jitter * when) / 100) * ((double)rand())/RAND_MAX);
+		spollsched.insert (pair<time_t, SPollEvent> (after+when+jit, SPollEvent(mi->second.occurence, mi->second.pconn, when, jitter)));
+//		spollsched.emplace (now+when, occurence, c, when, jitter);
+//		spollsched [now+when] = SPollEvent (occurence, c, when, jitter);
 	    }
-	
+	    mi++;
 	    mj->second.pconn->spollchedulled --;
 	    spollsched.erase (mj);
 	}
