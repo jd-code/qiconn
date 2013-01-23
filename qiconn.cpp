@@ -401,7 +401,8 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	}
     }
 
-    void Connection::register_into_pool (ConnectionPool *cp) {
+    void Connection::register_into_pool (ConnectionPool *cp, bool readit /* = true */) {
+	Connection::readit = readit;
 	if (cp != NULL) {
 	    Connection::cp = cp;
 	    cp->push (this);
@@ -523,7 +524,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	MConnections::iterator mi;
 	FD_ZERO (&r_fd);
 	for (mi=connections.begin() ; mi!=connections.end() ; mi++)
-	    if (mi->first >= 0) FD_SET (mi->first, &r_fd);
+	    if ((mi->first >= 0) && (mi->second->readit)) FD_SET (mi->first, &r_fd);
     }
 
     int ConnectionPool::set_biggest (void) {

@@ -206,6 +206,7 @@ namespace qiconn
 
 	protected:
 	    int fd;
+	   bool readit;			//!< shall we read-it ? (default true)
            bool issocket;
 	   bool isclosedalready;
  ConnectionPool *cp;
@@ -221,6 +222,7 @@ namespace qiconn
 	    //  }
 	    inline Connection (int fd, bool issocket = false) :
 		fd(fd),
+		readit(true),
 		issocket(issocket),
 		isclosedalready(false),
 		cp(NULL),
@@ -241,7 +243,7 @@ namespace qiconn
 		}
 	    }
 	    virtual string getname (void) = 0;
-	    void register_into_pool (ConnectionPool *cp);
+	    void register_into_pool (ConnectionPool *cp, bool readit = true);
 	    void deregister_from_pool ();
 	    void close (void);
 	    void schedule_for_destruction (void);
