@@ -319,12 +319,14 @@ namespace qiconn
 
 	    void destroyall (void);
 
-	    /* request no read (for files select always return read available)  */
+	    /* request no read (for files, select always returns read available)  */
 	    inline void reqnor (int fd) { if (fd >= 0) FD_CLR (fd, &r_fd); }
 	    /* request reading */
 	    inline void reqr (int fd) { if (fd >= 0) FD_SET (fd, &r_fd); }
 	    /* request writing */
 	    inline void reqw (int fd) { if (fd >= 0) FD_SET (fd, &w_fd); }
+	    /* request no write */
+	    inline void reqnow (int fd) { if (fd >= 0) FD_CLR (fd, &w_fd); }
 	    
 	    virtual ~ConnectionPool (void);
 

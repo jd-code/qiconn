@@ -434,6 +434,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     SocketConnection::SocketConnection (int fd, struct sockaddr_in const &client_addr)
 	: BufConnection (fd, true)
     {
+if (fd >= 0)
 {
     int buflen;
     socklen_t param_len = sizeof(buflen);
@@ -644,8 +645,8 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 		}
 	    }
 	    for (i=0 ; i<biggest_fd ; i++) {
-		// the same should be done here same here JDJDJD
-		if (FD_ISSET(i, &cw_fd)) {
+		// the double check is for connection which are unreqw in between ...
+		if (FD_ISSET(i, &cw_fd) && FD_ISSET(i, &w_fd)) {
 		    FD_CLR (i, &w_fd);
 		    connections[i]->effwrite();
 		}
@@ -906,7 +907,7 @@ if (debug_dummyout) {
 
 
     void BufConnection::eow_hook (void) {
-	if (corking && issocket) {
+	if (corking && issocket && (fd >=0)) {
 if (debug_corking) cout << "fd[" << fd << "] >> uncorking" << endl;
 	    int flag = 0;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
@@ -917,7 +918,7 @@ if (debug_corking) cout << "fd[" << fd << "] >> uncorking" << endl;
     }
 
     void BufConnection::cork (void) {
-	if (corking && issocket) {
+	if (corking && issocket && (fd >=0)) {
 if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	    int flag = 1;		// JDJDJDJD uncork
 	    if (setsockopt(fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(int)) != 0) {
@@ -937,7 +938,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	    cerr << "BufConnection::pushdummybuffer : silly attempt to push a buffer onto another" << endl;
 	    cerr << "     givenbufferiswaiting = " << (givenbufferiswaiting ? "true" : "false") << endl;
 	    cerr << "     givenbuffer = " << (givenbuffer ? "true" : "false") << endl;
-	    // JDJDJDJD ca devrait pouvoir ce faire pourtant !
+	    // JDJDJDJD ce serait pourtant tres pratique !!!! a faire ?
 	    return -1;
 	}
 	givenbufferiswaiting = true;

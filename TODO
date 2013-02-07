@@ -8,3 +8,7 @@ qiconn:
 
     [done] donner possibilite d'exclure une connection de fd_r pour ne pas faire de read sur une output only (stdout ou pipe ?)
     permettre de sortir/rentrer dans le fd_r du ConnectionPool qd on veut
+    
+    donner des acl simples en ipv4 puis ipv6 ?
+
+    fournir un mecanisme de re-enregistremenmt de fd qd il change pour le connectionpool
