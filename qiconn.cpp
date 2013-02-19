@@ -1659,38 +1659,39 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	const char *hex = "0123456789ABCDEF";
 	for (i=0 ; i< size ; ) {
 	    size_t j;
-	    cerr << "| ";
+	    cout << "| ";
 	    for (j=0 ; j<16 ; j++) {
 		if (i+j < size) {
 		    unsigned char c = s[i+j];
-		    cerr << hex[(c & 0xf0) >> 4]
+		    cout << hex[(c & 0xf0) >> 4]
 			 << hex[c & 0x0f]
 			 << " ";
 		} else {
-		    cerr << ".. ";
+		    cout << ".. ";
 		}
 		if (j == 8)
-		    cerr << " ";
+		    cout << " ";
 	    }
-	    cerr << "| ";
+	    cout << "| ";
 	    for (j=0 ; j<16 ; j++) {
 		if (i+j < size) {
 		    unsigned char c = s[i+j];
 		    if (isgraph (c))
-			cerr << c;
+			cout << c;
 		    else if (c == ' ')
-			cerr << ' ';
+			cout << ' ';
 		    else
-			cerr << ".";
+			cout << ".";
 		} else {
-		    cerr << " ";
+		    cout << " ";
 		}
 		if (j == 8)
-		    cerr << " ";
+		    cout << " ";
 	    }
-	    cerr << " |" << endl;
+	    cout << " |" << endl;
 	    i += 16;
 	}
+	return cout;
     }
 
 } // namespace qiconn
