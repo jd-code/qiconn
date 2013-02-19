@@ -505,6 +505,13 @@ namespace qiconn
     };
     ostream & operator<< (ostream& cout, ostreamMap const &m );
 
+    class hexdump {
+	public:
+	    const string &s;
+	    hexdump (const string &s) : s(s) {}
+    };
+    ostream & operator<< (ostream& cout, hexdump const &m );
+
 }   // namespace qiconn
 
 #endif // QICONN_H_INCLUDE
