@@ -508,7 +508,10 @@ namespace qiconn
     class hexdump {
 	public:
 	    const string &s;
-	    hexdump (const string &s) : s(s) {}
+	    const char * p;
+	    size_t n;
+	    hexdump (const string &s) : s(s), p(NULL), n(0) {}
+	    hexdump (const char *p, size_t n) : s(""), p(p), n(n) {}
     };
     ostream & operator<< (ostream& cout, hexdump const &m );
 

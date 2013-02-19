@@ -1654,42 +1654,81 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
     }
 
     ostream & operator<< (ostream& cout, hexdump const &m ) {
-	const string &s = m.s;
-	size_t i, size = s.size();
 	const char *hex = "0123456789ABCDEF";
-	for (i=0 ; i< size ; ) {
-	    size_t j;
-	    cout << "| ";
-	    for (j=0 ; j<16 ; j++) {
-		if (i+j < size) {
-		    unsigned char c = s[i+j];
-		    cout << hex[(c & 0xf0) >> 4]
-			 << hex[c & 0x0f]
-			 << " ";
-		} else {
-		    cout << ".. ";
+	if (m.p == NULL) {
+	    const string &s = m.s;
+	    size_t i, size = s.size();
+	    for (i=0 ; i< size ; ) {
+		size_t j;
+		cout << "| ";
+		for (j=0 ; j<16 ; j++) {
+		    if (i+j < size) {
+			unsigned char c = s[i+j];
+			cout << hex[(c & 0xf0) >> 4]
+			     << hex[c & 0x0f]
+			     << " ";
+		    } else {
+			cout << ".. ";
+		    }
+		    if (j == 8)
+			cout << " ";
 		}
-		if (j == 8)
-		    cout << " ";
-	    }
-	    cout << "| ";
-	    for (j=0 ; j<16 ; j++) {
-		if (i+j < size) {
-		    unsigned char c = s[i+j];
-		    if (isgraph (c))
-			cout << c;
-		    else if (c == ' ')
-			cout << ' ';
-		    else
-			cout << ".";
-		} else {
-		    cout << " ";
+		cout << "| ";
+		for (j=0 ; j<16 ; j++) {
+		    if (i+j < size) {
+			unsigned char c = s[i+j];
+			if (isgraph (c))
+			    cout << c;
+			else if (c == ' ')
+			    cout << ' ';
+			else
+			    cout << ".";
+		    } else {
+			cout << " ";
+		    }
+		    if (j == 7)
+			cout << " ";
 		}
-		if (j == 8)
-		    cout << " ";
+		cout << " |" << endl;
+		i += 16;
 	    }
-	    cout << " |" << endl;
-	    i += 16;
+	} else {
+	    size_t i, size = m.n;
+	    const char *s = m.p;
+	    for (i=0 ; i< size ; ) {
+		size_t j;
+		cout << "| ";
+		for (j=0 ; j<16 ; j++) {
+		    if (i+j < size) {
+			unsigned char c = s[i+j];
+			cout << hex[(c & 0xf0) >> 4]
+			     << hex[c & 0x0f]
+			     << " ";
+		    } else {
+			cout << ".. ";
+		    }
+		    if (j == 8)
+			cout << " ";
+		}
+		cout << "| ";
+		for (j=0 ; j<16 ; j++) {
+		    if (i+j < size) {
+			unsigned char c = s[i+j];
+			if (isgraph (c))
+			    cout << c;
+			else if (c == ' ')
+			    cout << ' ';
+			else
+			    cout << ".";
+		    } else {
+			cout << " ";
+		    }
+		    if (j == 7)
+			cout << " ";
+		}
+		cout << " |" << endl;
+		i += 16;
+	    }
 	}
 	return cout;
     }
