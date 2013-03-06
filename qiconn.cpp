@@ -1670,7 +1670,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 		    } else {
 			cout << ".. ";
 		    }
-		    if (j == 8)
+		    if (j == 7)
 			cout << " ";
 		}
 		cout << "| ";
