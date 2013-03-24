@@ -395,10 +395,27 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	    if (isclosedalready) return;
 	    if (::close(fd) != 0) {
 		int e = errno;
-		cerr << "error closing fd[" << fd << "] : " << strerror(e) << endl ;
-	    } else
+		cerr << "error closing fd[" << fd << "] for " << getname() << ": " << strerror(e) << endl ;
+	    } else {
+		fd = -1;
 		isclosedalready = true;
+	    }
 	}
+    }
+
+    void Connection::closebutkeepregistered (void) {
+	int newfd = fd;
+	if (isclosedalready) return;
+	if (fd >= 0) {
+	    if (::close(fd) != 0) {
+		int e = errno;
+		cerr << "error closing fd[" << fd << "] for " << getname() << ": " << strerror(e) << endl ;
+	    } else {
+		newfd = -1;
+		isclosedalready = true;
+	    }
+	}
+	notifyfdchange (newfd);
     }
 
     void Connection::register_into_pool (ConnectionPool *cp, bool readit /* = true */) {
@@ -415,6 +432,20 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	    cp->pull (this);
 	    cp = NULL;
 	}
+    }
+
+    void Connection::notifyfdchange (int newfd) {
+	if (cp == NULL) {
+	    cerr << "error: notifyfdchange connection [" << getname() << "] isn't registered to any connection pool" << endl;
+	    fd = newfd;
+//	    if (fd >= 0)
+//		isclosedalready = true;	// JDJDJDJD not really true !!!
+	    return;
+	}
+	ConnectionPool *oldcp = cp;
+	deregister_from_pool ();
+	fd = newfd;
+	register_into_pool (oldcp);
     }
 
     Connection::~Connection (void) {
@@ -737,7 +768,7 @@ cerr << "done." << endl << endl;
 //     for (mi=connections.begin() ; mi!=connections.end() ; mi++)
 // 	cerr << "    fd[" << mi->first << "] used" << endl;
 // }
-		if (c->fd >= 0)
+		if (c->fd >= -1)
 		    c->fd = -2;
 // cerr << "not empty final value :" << c->fd << endl;
 	    }
@@ -748,8 +779,9 @@ cerr << "done." << endl << endl;
 	    set_biggest ();
 	    build_r_fd ();
 	    reqw (c->fd);	/* we ask straightforwardly for write for welcome message */
-	} else
+	} else {
 	    cerr << "warning: connection[" << c->getname() << ", fd=" << c->fd << "] was already in pool ???" << endl;
+	}
     }
 
     void ConnectionPool::pull (Connection *c) {
@@ -771,6 +803,32 @@ cerr << "done." << endl << endl;
 	}
     }
 
+    ostream& operator<< (ostream& cout, ConnectionPool const& cp) {
+	return cp.dump (cout);
+    }
+
+    ostream& ConnectionPool::dump (ostream& cout) const {
+	MConnections::const_iterator mi;
+	size_t ioactive = 0;
+	for (mi=connections.begin() ; mi!=connections.end() ; mi++) {
+	    int fd = mi->first;
+	    cout << "    " 
+		 << setw(5) << setfill (' ') << fd << " ";
+	    cout << (mi->second->readit ? 'r' : ' ')
+		 << (mi->second->issocket ? 'S' : ' ')
+		 << (mi->second->isclosedalready ? 'C' : ' ');
+	    if (fd >= 0) {
+		ioactive ++;
+		cout << (FD_ISSET(fd, &opened) ? 'O' : ' ')
+		     << (FD_ISSET(fd, &r_fd) ? 'R' : ' ')
+		     << (FD_ISSET(fd, &w_fd) ? 'W' : ' ');
+	    } else {
+		cout << "   ";
+	    }
+	    cout << " " << mi->second->gettype() << " " << mi->second->getname() << endl;
+	}
+	return cout << connections.size() << " connections (" << ioactive << " i/o-actives)" << endl;
+    }
 
     /*
      *  ---------------------------- BufConnection : let's put some line buffering on top of Connection

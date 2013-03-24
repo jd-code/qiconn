@@ -242,10 +242,13 @@ namespace qiconn
 		    reachedeow = false;
 		}
 	    }
+	    virtual const char* gettype (void) = 0;
 	    virtual string getname (void) = 0;
 	    void register_into_pool (ConnectionPool *cp, bool readit = true);
 	    void deregister_from_pool ();
+	    void notifyfdchange (int newfd);
 	    void close (void);
+	    void closebutkeepregistered (void);
 	    void schedule_for_destruction (void);
 	    virtual void poll (void) = 0;
 	    virtual void schedpoll (void) {}
@@ -276,7 +279,7 @@ namespace qiconn
 	    list<Connection*> destroy_schedule;
 	    bool scheddest;
 
-	    fd_set opened;
+	    fd_set opened;  // this one doesn't seem to be used !!!! JDJDJDJD to be supressed ??
 	    fd_set r_fd;
 	    fd_set w_fd;
 
@@ -333,8 +336,11 @@ namespace qiconn
 	    void push (Connection *c);
 
 	    void pull (Connection *c);
+
+	    ostream& dump (ostream& cout) const;
     };
 
+    ostream& operator<< (ostream& cout, ConnectionPool const& cp);
 
     /*
      *  ---------------------------- BufConnection : let's put some line buffering on top of Connection

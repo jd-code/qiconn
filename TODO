@@ -11,4 +11,5 @@ qiconn:
     
     donner des acl simples en ipv4 puis ipv6 ?
 
-    fournir un mecanisme de re-enregistremenmt de fd qd il change pour le connectionpool
+    [done] fournir un mecanisme de re-enregistremenmt de fd qd il change pour le connectionpool
+    supprimer le champ  fd_set opened   ??? inutilisé ??
