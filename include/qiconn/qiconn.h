@@ -18,6 +18,7 @@
 #include <list>
 #include <map>
 
+#include <typeinfo>
 
 //! Maintaining a pool of closely watched tcp connections
 /*! The idea is to register as many object [JDJDJDJD be more precise here]
@@ -518,6 +519,7 @@ namespace qiconn
 	    size_t n;
 	    hexdump (const string &s) : s(s), p(NULL), n(0) {}
 	    hexdump (const char *p, size_t n) : s(""), p(p), n(n) {}
+	    template <class T> hexdump (T* v) : s (""), p( (const char*)v), n(sizeof(T)) {}
     };
     ostream & operator<< (ostream& cout, hexdump const &m );
 
