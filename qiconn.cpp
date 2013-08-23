@@ -520,16 +520,11 @@ if (fd >= 0)
 
     int ConnectionPool::init_signal (void) {
 	int i;
-	int err = 0;
 	for (i=0 ; i<256 ; i++)
 	    pend_signals[i] = 0;
 	caught_signal = 0;
 
-	for (i=0 ; i<255 ; i++) {
-	  if (i == 13)
-	      err += add_signal_handler (i);
-	}
-	return err;
+	return add_signal_handler (13);
     }
 
     void ConnectionPool::treat_signal (void) {
