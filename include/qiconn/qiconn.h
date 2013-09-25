@@ -129,11 +129,12 @@ namespace qiconn
     ostream& operator<< (ostream& out, struct sockaddr_in const &a);
 
     /*
-     *  ---------------------------- server_pool : opens a socket for listing a port at a whole --------------
+     *  ---------------------------- server_pool : opens a socket for listening a port at a whole ------------
      */
 
-
+    // the default is WITH TCP_DEFER_ACCEPT
     int server_pool (int port, const char *addr = NULL, int type = AF_INET);
+    int server_pool_nodefer (int port, const char *addr = NULL, int type = AF_INET);
 
     /*
      *  ---------------------------- init_connect : makes a telnet over socket, yes yes ----------------------

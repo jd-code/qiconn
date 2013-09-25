@@ -56,6 +56,18 @@ namespace qiconn
     #define MAX_QUEUDED_CONNECTIONS 5
 
     int server_pool (int port, const char *addr /* = NULL */, int type /*= AF_INET*/) {
+	int s = server_pool_nodefer (port, addr, type);
+	{   int yes = 1;
+	    if (setsockopt (s, SOL_TCP, TCP_DEFER_ACCEPT, &yes, sizeof (yes)) != 0) {
+		int e = errno;
+		cerr << "could not setsockopt TCP_DEFER_ACCEPT (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
+	}
+	return s;
+    }
+
+    int server_pool_nodefer (int port, const char *addr /* = NULL */, int type /*= AF_INET*/) {
 	struct sockaddr_in serv_addr;
 
 	memset (&serv_addr, 0, sizeof(serv_addr));
@@ -110,13 +122,6 @@ namespace qiconn
 	    }
 	}
 
-	{   int yes = 1;
-	    if (setsockopt (s, SOL_TCP, TCP_DEFER_ACCEPT, &yes, sizeof (yes)) != 0) {
-		int e = errno;
-		cerr << "could not setsockopt TCP_DEFER_ACCEPT (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-		return -1;
-	    }
-	}
 
 
 
