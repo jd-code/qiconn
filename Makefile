@@ -5,7 +5,7 @@ INCLUDES=-I./include
 PICTARGET=-fpic
 PREFIX=/usr/local
 SHELL=/bin/sh
-VERSION=1.0.1
+VERSION=1.0.2
 
 default: all
 
