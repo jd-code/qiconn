@@ -1706,7 +1706,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	}
 	map<string,string>::const_iterator mi;
 	for (mi=m.m.begin() ; mi!=m.m.end() ; mi++)
-	    cout << m.name << "[" << mi->first << "]=\"" << mi->second << '"' << endl;
+	    cout << m.name << "[" << mi->first << "]=\"" << hexdump(mi->second) << '"' << endl;
 	
 	return cout;
     }
