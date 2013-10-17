@@ -785,7 +785,8 @@ cerr << "done." << endl << endl;
     }
 
     void ConnectionPool::pull (Connection *c) {
-	MConnections::iterator mi = connections.find (c->fd);
+	int fd = c->fd;
+	MConnections::iterator mi = connections.find (fd);
 	if (mi != connections.end()) {
 	    if (c->spollchedulled > 0) {
 		unschedule_spoll (mi);
@@ -795,6 +796,12 @@ cerr << "done." << endl << endl;
 			 << c->spollchedulled << endl;
 		}
 	    }
+
+	    if (fd >=0 ) {
+		reqnor (fd);
+		reqnow (fd);
+	    }
+
 	    connections.erase (mi);
 	    set_biggest ();
 	    build_r_fd ();
