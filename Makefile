@@ -1,6 +1,6 @@
 
-DEBUG=
-#DEBUG=-g
+DEBUG=${MAKEDEBUG}
+#DEBUG=${MAKEDEBUG} -g
 INCLUDES=-I./include
 PICTARGET=-fpic
 PREFIX=/usr/local
