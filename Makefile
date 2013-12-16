@@ -1,6 +1,6 @@
 
-DEBUG=${MAKEDEBUG}
-#DEBUG=${MAKEDEBUG} -g
+CPPFLAGS=${MAKEDEBUG} -DWITHLINUXISMS
+#CPPFLAGS=${MAKEDEBUG} -g
 INCLUDES=-I./include
 PICTARGET=-fpic
 PREFIX=/usr/local
@@ -18,10 +18,10 @@ vimtest: all
 
 
 qiconn_dyn.o: qiconn.cpp include/qiconn/qiconn.h
-	g++ ${DEBUG} ${INCLUDES} ${PICTARGET} -Wall -c -o qiconn_dyn.o qiconn.cpp
+	g++ ${CPPFLAGS} ${INCLUDES} ${PICTARGET} -Wall -c -o qiconn_dyn.o qiconn.cpp
 
 qiconn.o: qiconn.cpp include/qiconn/qiconn.h
-	g++ ${DEBUG} ${INCLUDES} -Wall -c qiconn.cpp
+	g++ ${CPPFLAGS} ${INCLUDES} -Wall -c qiconn.cpp
 
 libqiconn.a: qiconn.o
 	ar  rcs libqiconn.a qiconn.o

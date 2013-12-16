@@ -7,6 +7,11 @@
 #define QICONN_H_SCOPE extern
 #endif
 
+#ifdef WITHLINUXISMS
+#define HAVE_TCP_WINDOW_CLAMP
+#define HAVE_SOL_TCP
+#define HAVE_TCP_CORK
+#endif
 
 #include <netdb.h>	    // gethostbyname
 // #include <sys/types.h>
