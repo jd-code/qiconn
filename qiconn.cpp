@@ -463,7 +463,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	if (cp != NULL)
 	    cp->schedule_for_destruction (this);
 	else
-	    cerr << "warning : unable to register fd[" << getname() << "]for destrucion becasue cp=NULL" << endl;
+	    cerr << "warning : unable to register fd[" << getname() << "]for destrucion because cp=NULL" << endl;
     }
 
 
@@ -544,6 +544,7 @@ if (fd >= 0)
     }
 
     ConnectionPool::ConnectionPool (void) {
+	debug_multiple_scheddestr = false;
 	biggest_fd = 0;
 	exitselect = false;
 	scheddest = false;
@@ -575,7 +576,17 @@ if (fd >= 0)
 	    cerr << "warning: we were asked for destroying some unregistered connection[" << c->getname() << "]" << endl;
 	    return;
 	}
-	destroy_schedule.push_back(c);
+	if (debug_multiple_scheddestr) {
+	    map<Connection*,int>::iterator mi = destroy_schedule.find(c);
+	    if (mi == destroy_schedule.end()) {
+		destroy_schedule[c] = 0;
+	    } else {
+cerr << "Connection " << mi->first->gettype() << "::" << mi->first->getname() << " schedulled for destruction more than once !" << endl;
+		mi->second ++;
+	    }
+	} else {
+	    destroy_schedule[c]++;
+	}
 	scheddest = true;
     }
 
@@ -646,10 +657,11 @@ if (fd >= 0)
 
     int ConnectionPool::select_poll (struct timeval *timeout) {
 	if (scheddest) {
-	    list<Connection*>::iterator li;
+	    map<Connection*,int>::iterator li;
 	    for (li=destroy_schedule.begin() ; li!=destroy_schedule.end() ; li++)
-		delete (*li);
-	    destroy_schedule.erase (destroy_schedule.begin(), destroy_schedule.end());
+		delete (li->first);
+	    //destroy_schedule.erase (destroy_schedule.begin(), destroy_schedule.end());
+	    destroy_schedule.clear ();
 	    scheddest = false;
 	}
 

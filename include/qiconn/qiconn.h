@@ -278,7 +278,7 @@ namespace qiconn
 	    typedef map <int, Connection*, gtint> MConnections;
 	    
 	    MConnections connections;
-	    list<Connection*> destroy_schedule;
+	    map<Connection*,int> destroy_schedule;
 	    bool scheddest;
 
 	    fd_set opened;  // this one doesn't seem to be used !!!! JDJDJDJD to be supressed ??
@@ -297,6 +297,7 @@ namespace qiconn
 
 	protected:
 	    bool exitselect;
+	    bool debug_multiple_scheddestr;		//! debug whenever a Connection is schedulled for destruction more than once
 	    virtual void treat_signal (void);
 	    time_t tnextspoll;
 	    multimap <time_t, SPollEvent> spollsched;  //! the spoll schedule
@@ -311,6 +312,7 @@ namespace qiconn
 	    inline void tikkle (void) { exitselect = true; }
 	    
 	    void schedule_for_destruction (Connection * c);
+	    void set_debug_multiple_scheddestr (bool f) { debug_multiple_scheddestr = f;}
 
 	    bool schedule_next_spoll (Connection * c, time_t delay, TOccurences, int jitter = 0);
 	    void checklaunchspoll (void);
