@@ -368,14 +368,16 @@ namespace qiconn
     {
 	private:
 					   bool	destroyatendofwrite;
-					 string	bufout;
 					 size_t	wpos;
-					   bool raw;
 	protected:
+					   bool raw;	// use to be private used only in qycrypt
+
+					 string	bufout;
 					   bool corking;
 				   DummyBuffer*	pdummybuffer;
 					   bool	givenbuffer;
 					   bool givenbufferiswaiting;
+					 size_t maxpendsize;
 	public:
 					 string	bufin;
 				   stringstream	*out;
@@ -386,7 +388,8 @@ namespace qiconn
 //				   virtual void	lineread (void) = 0;
 					   void setrawmode (void);
 					   void setlinemode (void);
-					   void	flush (void);
+					   void setmaxpendsize (size_t l);
+				   virtual void	flush (void);
 					   void	cork (void);
 	    			   virtual void eow_hook (void);
 					   void	flushandclose (void);

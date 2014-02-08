@@ -872,7 +872,9 @@ cerr << "done." << endl << endl;
 	if (out == NULL) {
 	    int e = errno;
 cerr << "BufConnection::BufConnection : could not allocate stringstream ? : " << strerror (e) << endl;
+	    schedule_for_destruction();
 	}
+	maxpendsize = string::npos;
 	wpos = 0;
     }
 
@@ -882,6 +884,10 @@ cerr << "BufConnection::BufConnection : could not allocate stringstream ? : " <<
 
     void BufConnection::setlinemode (void) {
 	raw = false;
+    }
+
+    void BufConnection::setmaxpendsize (size_t l) {
+	maxpendsize = l;
     }
 
     size_t BufConnection::read (void) {
@@ -920,7 +926,7 @@ if (debug_lineread) {
     cerr << "BufConnection::read->lineread(" << bufin << ")" << endl;
 }
 		    lineread ();
-		    bufin = "";
+		    bufin.clear();
 		} else
 		    bufin += s[i];
 	    } else {
@@ -932,7 +938,10 @@ if (debug_lineread) {
     cerr << "BufConnection::read->lineread(" << bufin << ")" << endl;
 }
 	    lineread ();
-	    bufin = "";
+	    bufin.clear();
+	} else if ((maxpendsize != string::npos) && (bufin.size() > maxpendsize)) {
+	    cerr << "BufConnection::read " << gettype() << "::" << getname() << " bufin.size=" << bufin.size() << " > " << maxpendsize << " : closing connection" << endl;
+	    schedule_for_destruction();
 	}
 	if (n==0) {
 	    if (debug_newconnect) cerr << "read() returned 0. we may close the fd[" << fd << "] ????" << endl;
