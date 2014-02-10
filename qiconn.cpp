@@ -311,7 +311,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 //PROFILECONNECT    cerr << "first connect fail connect=" << r
 //PROFILECONNECT         << " took[" << ((clok.tv_sec - startc.tv_sec) * 10000 + (clok.tv_usec - startc.tv_usec)/100) << "]" << endl;
 	    int e = errno;
-	    if (e == 115 /* EINPROGRESS */) {
+	    if (e == EINPROGRESS /* EINPROGRESS */) {
 		time_t start = time (NULL);
 		bool connected =false;
 		do { 
