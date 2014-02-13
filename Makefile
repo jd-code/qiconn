@@ -1,8 +1,12 @@
 
+# linux
 CPPFLAGS=${MAKEDEBUG} -DWITHLINUXISMS
-#CPPFLAGS=${MAKEDEBUG} -g
-INCLUDES=-I./include
 PICTARGET=-fpic
+
+# macosx
+#CPPFLAGS=${MAKEDEBUG} -g
+
+INCLUDES=-I./include
 PREFIX=/usr/local
 SHELL=/bin/sh
 VERSION=1.0.2
