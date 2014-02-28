@@ -26,7 +26,7 @@
 #include <typeinfo>
 
 //! Maintaining a pool of closely watched tcp connections
-/*! The idea is to register as many object [JDJDJDJD be more precise here]
+/*! The idea is to register as many derivated instances
  *  as there are concurent connections to deal with.
  *
  *  each connection should be a state machine able to deal with events
