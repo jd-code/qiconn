@@ -283,7 +283,7 @@ namespace qiconn
 	    typedef map <int, Connection*, gtint> MConnections;
 	    
 	    MConnections connections;
-	    list<Connection*> destroy_schedule;
+	    map<Connection*,int> destroy_schedule;
 	    bool scheddest;
 
 	    fd_set opened;  // this one doesn't seem to be used !!!! JDJDJDJD to be supressed ??
@@ -302,6 +302,7 @@ namespace qiconn
 
 	protected:
 	    bool exitselect;
+	    bool debug_multiple_scheddestr;		//! debug whenever a Connection is schedulled for destruction more than once
 	    virtual void treat_signal (void);
 	    time_t tnextspoll;
 	    multimap <time_t, SPollEvent> spollsched;  //! the spoll schedule
@@ -316,6 +317,7 @@ namespace qiconn
 	    inline void tikkle (void) { exitselect = true; }
 	    
 	    void schedule_for_destruction (Connection * c);
+	    void set_debug_multiple_scheddestr (bool f) { debug_multiple_scheddestr = f;}
 
 	    bool schedule_next_spoll (Connection * c, time_t delay, TOccurences, int jitter = 0);
 	    void checklaunchspoll (void);
@@ -366,14 +368,16 @@ namespace qiconn
     {
 	private:
 					   bool	destroyatendofwrite;
-					 string	bufout;
 					 size_t	wpos;
-					   bool raw;
 	protected:
+					   bool raw;	// use to be private used only in qycrypt
+
+					 string	bufout;
 					   bool corking;
 				   DummyBuffer*	pdummybuffer;
 					   bool	givenbuffer;
 					   bool givenbufferiswaiting;
+					 size_t maxpendsize;
 	public:
 					 string	bufin;
 				   stringstream	*out;
@@ -384,7 +388,8 @@ namespace qiconn
 //				   virtual void	lineread (void) = 0;
 					   void setrawmode (void);
 					   void setlinemode (void);
-					   void	flush (void);
+					   void setmaxpendsize (size_t l);
+				   virtual void	flush (void);
 					   void	cork (void);
 	    			   virtual void eow_hook (void);
 					   void	flushandclose (void);

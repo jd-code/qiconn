@@ -311,7 +311,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 //PROFILECONNECT    cerr << "first connect fail connect=" << r
 //PROFILECONNECT         << " took[" << ((clok.tv_sec - startc.tv_sec) * 10000 + (clok.tv_usec - startc.tv_usec)/100) << "]" << endl;
 	    int e = errno;
-	    if (e == 115 /* EINPROGRESS */) {
+	    if (e == EINPROGRESS /* EINPROGRESS */) {
 		time_t start = time (NULL);
 		bool connected =false;
 		do { 
@@ -467,7 +467,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	if (cp != NULL)
 	    cp->schedule_for_destruction (this);
 	else
-	    cerr << "warning : unable to register fd[" << getname() << "]for destrucion becasue cp=NULL" << endl;
+	    cerr << "warning : unable to register fd[" << getname() << "]for destrucion because cp=NULL" << endl;
     }
 
 
@@ -548,6 +548,7 @@ if (fd >= 0)
     }
 
     ConnectionPool::ConnectionPool (void) {
+	debug_multiple_scheddestr = false;
 	biggest_fd = 0;
 	exitselect = false;
 	scheddest = false;
@@ -579,7 +580,17 @@ if (fd >= 0)
 	    cerr << "warning: we were asked for destroying some unregistered connection[" << c->getname() << "]" << endl;
 	    return;
 	}
-	destroy_schedule.push_back(c);
+	if (debug_multiple_scheddestr) {
+	    map<Connection*,int>::iterator mi = destroy_schedule.find(c);
+	    if (mi == destroy_schedule.end()) {
+		destroy_schedule[c] = 0;
+	    } else {
+cerr << "Connection " << mi->first->gettype() << "::" << mi->first->getname() << " schedulled for destruction more than once !" << endl;
+		mi->second ++;
+	    }
+	} else {
+	    destroy_schedule[c]++;
+	}
 	scheddest = true;
     }
 
@@ -650,10 +661,11 @@ if (fd >= 0)
 
     int ConnectionPool::select_poll (struct timeval *timeout) {
 	if (scheddest) {
-	    list<Connection*>::iterator li;
+	    map<Connection*,int>::iterator li;
 	    for (li=destroy_schedule.begin() ; li!=destroy_schedule.end() ; li++)
-		delete (*li);
-	    destroy_schedule.erase (destroy_schedule.begin(), destroy_schedule.end());
+		delete (li->first);
+	    //destroy_schedule.erase (destroy_schedule.begin(), destroy_schedule.end());
+	    destroy_schedule.clear ();
 	    scheddest = false;
 	}
 
@@ -860,7 +872,9 @@ cerr << "done." << endl << endl;
 	if (out == NULL) {
 	    int e = errno;
 cerr << "BufConnection::BufConnection : could not allocate stringstream ? : " << strerror (e) << endl;
+	    schedule_for_destruction();
 	}
+	maxpendsize = string::npos;
 	wpos = 0;
     }
 
@@ -870,6 +884,10 @@ cerr << "BufConnection::BufConnection : could not allocate stringstream ? : " <<
 
     void BufConnection::setlinemode (void) {
 	raw = false;
+    }
+
+    void BufConnection::setmaxpendsize (size_t l) {
+	maxpendsize = l;
     }
 
     size_t BufConnection::read (void) {
@@ -908,7 +926,7 @@ if (debug_lineread) {
     cerr << "BufConnection::read->lineread(" << bufin << ")" << endl;
 }
 		    lineread ();
-		    bufin = "";
+		    bufin.clear();
 		} else
 		    bufin += s[i];
 	    } else {
@@ -920,7 +938,10 @@ if (debug_lineread) {
     cerr << "BufConnection::read->lineread(" << bufin << ")" << endl;
 }
 	    lineread ();
-	    bufin = "";
+	    bufin.clear();
+	} else if ((maxpendsize != string::npos) && (bufin.size() > maxpendsize)) {
+	    cerr << "BufConnection::read " << gettype() << "::" << getname() << " bufin.size=" << bufin.size() << " > " << maxpendsize << " : closing connection" << endl;
+	    schedule_for_destruction();
 	}
 	if (n==0) {
 	    if (debug_newconnect) cerr << "read() returned 0. we may close the fd[" << fd << "] ????" << endl;
