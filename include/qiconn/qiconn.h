@@ -519,15 +519,22 @@ namespace qiconn
     ostream & operator<< (ostream& cout, ostreamMap const &m );
 
     class hexdump {
+	private:
+static string empty;
 	public:
 	    const string &s;
 	    const char * p;
 	    size_t n;
 	    hexdump (const string &s) : s(s), p(NULL), n(0) {}
-	    hexdump (const char *p, size_t n) : s(""), p(p), n(n) {}
-	    template <class T> hexdump (T* v) : s (""), p( (const char*)v), n(sizeof(T)) {}
+	    hexdump (const char *p, size_t n) : s(empty), p(p), n(n) {}
+	    template <class T> hexdump (T* v) : s(empty), p( (const char*)v), n(sizeof(T)) {}
     };
     ostream & operator<< (ostream& cout, hexdump const &m );
+
+
+#ifdef QICONN_H_GLOBINST
+    string hexdump::empty;
+#endif
 
 }   // namespace qiconn
 
