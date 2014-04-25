@@ -84,18 +84,66 @@ else
 fi
 
 
-dnl fast check for macOSX capabilities (as a default)
-AC_MSG_CHECKING(for macosX ioctls)
-case "$target" in
-    *-apple-darwin*)
-	AC_DEFINE(WITHLINUXISMS, 0, [macosX detected : no linuxisms])
-	AC_MSG_RESULT([macosX detected : no linuxisms])
-	;;
-    *)
-	AC_DEFINE(WITHLINUXISMS, 1, [linuxism activayed as a default])
-	AC_MSG_RESULT([linuxism activayed as a default])
-	;;
-esac
+
+dnl check for TCP_WINDOW_CLAMP --------------------------------------------------------
+AC_MSG_CHECKING(for TCP_WINDOW_CLAMP)
+have_tcp_clamp=no
+AC_TRY_COMPILE([
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+],[
+int s=0;
+int clamp = 1024;
+setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp));
+],[
+have_tcp_clamp=yes
+])
+AC_MSG_RESULT($have_tcp_clamp)
+if test x$have_tcp_clamp = xyes; then
+    AC_DEFINE(HAVE_TCP_WINDOW_CLAMP, 1, [Define to 1 if you have TCP_WINDOW_CLAMP])
+else
+    AC_DEFINE(HAVE_TCP_WINDOW_CLAMP, 0, [Define to 1 if you have TCP_WINDOW_CLAMP])
+fi
+
+dnl check for SOL_TCP and TCP_DEFER_ACCEPT --------------------------------------------
+AC_MSG_CHECKING(for SOL_TCP and TCP_DEFER_ACCEPT)
+have_sol_tcp=no
+AC_TRY_COMPILE([
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+],[
+int s=0;
+int yes = 1;
+setsockopt (s, SOL_TCP, TCP_DEFER_ACCEPT, &yes, sizeof(yes));
+],[
+have_sol_tcp=yes
+])
+AC_MSG_RESULT($have_sol_tcp)
+if test x$have_sol_tcp = xyes; then
+    AC_DEFINE(HAVE_SOL_TCP, 1, [Define to 1 if you have SOL_TCP and TCP_DEFER_ACCEPT])
+else
+    AC_DEFINE(HAVE_SOL_TCP, 0, [Define to 1 if you have SOL_TCP and TCP_DEFER_ACCEPT])
+fi
+
+dnl check for TCP_CORK ----------------------------------------------------------------
+AC_MSG_CHECKING(for TCP_CORK)
+have_tcp_cork=no
+AC_TRY_COMPILE([
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+],[
+int s=0;
+int yes = 1;
+setsockopt (s, IPPROTO_TCP, TCP_CORK, &yes, sizeof(yes));
+],[
+have_tcp_cork=yes
+])
+AC_MSG_RESULT($have_tcp_cork)
+if test x$have_tcp_cork = xyes; then
+    AC_DEFINE(HAVE_TCP_CORK, 1, [Define to 1 if you have TCP_CORK])
+else
+    AC_DEFINE(HAVE_TCP_CORK, 0, [Define to 1 if you have TCP_CORK])
+fi
 
 
 dnl check for mac-osX file scheme

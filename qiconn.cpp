@@ -57,7 +57,7 @@ namespace qiconn
 
     int server_pool (int port, const char *addr /* = NULL */, int type /*= AF_INET*/) {
 	int s = server_pool_nodefer (port, addr, type);
-#ifdef HAVE_SOL_TCP
+#if HAVE_SOL_TCP == 1
 	{   int yes = 1;
 	    if (setsockopt (s, SOL_TCP, TCP_DEFER_ACCEPT, &yes, sizeof (yes)) != 0) {
 		int e = errno;
@@ -145,7 +145,7 @@ namespace qiconn
 	return -1;
     }
 
-#ifdef HAVE_TCP_WINDOW_CLAMP
+#if HAVE_TCP_WINDOW_CLAMP == 1
     int clamp = 64*1024;
     if (setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
 	int e = errno;
@@ -997,7 +997,7 @@ if (debug_dummyout) {
 
 
     void BufConnection::eow_hook (void) {
-#ifdef HAVE_TCP_CORK
+#if HAVE_TCP_CORK == 1
 	if (corking && issocket && (fd >=0)) {
 if (debug_corking) cout << "fd[" << fd << "] >> uncorking" << endl;
 	    int flag = 0;		// JDJDJDJD uncork
@@ -1010,7 +1010,7 @@ if (debug_corking) cout << "fd[" << fd << "] >> uncorking" << endl;
     }
 
     void BufConnection::cork (void) {
-#ifdef HAVE_TCP_CORK
+#if HAVE_TCP_CORK == 1
 	if (corking && issocket && (fd >=0)) {
 if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	    int flag = 1;		// JDJDJDJD uncork
@@ -1460,7 +1460,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	cerr << "could not setsockopt TCP_NODELAY=1 (for accepting connection) : " << strerror (e) << endl ;
     }
 
-#ifdef HAVE_TCP_WINDOW_CLAMP
+#if HAVE_TCP_WINDOW_CLAMP == 1
     int clamp = 64*1024;
     if (setsockopt (f, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
 	int e = errno;
