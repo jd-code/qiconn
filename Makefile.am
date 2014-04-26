@@ -19,6 +19,6 @@ clean-local:
 	rm -rf qiconn-doc
 
 distclean-local:
-	rm m4/*.m4
+	rm -f m4/*.m4
 
 
