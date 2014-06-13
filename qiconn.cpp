@@ -670,8 +670,11 @@ cerr << "Connection " << mi->first->gettype() << "::" << mi->first->getname() <<
 	}
 
 	MConnections::iterator mi;
-	for (mi=connections.begin() ; mi!=connections.end() ; mi++)
-	    mi->second->poll ();
+	for (mi=connections.begin() ; mi!=connections.end() ; ) {
+	    MConnections::iterator mj = mi;
+	    mi++;
+	    mj->second->poll();	    // using mj, in case poll calls some self-deregistration ...
+	}
 	
 	fd_set cr_fd = r_fd,
 	       cw_fd = w_fd;

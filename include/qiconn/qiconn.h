@@ -302,6 +302,13 @@ namespace qiconn
 	    multimap <time_t, SPollEvent> spollsched;  //! the spoll schedule
 
 
+	friend void Connection::deregister_from_pool (void);
+
+	private:
+	    void pull (Connection *c);
+	public:
+	    void push (Connection *c);
+
 	public:
 	    ConnectionPool (void);
 	    int add_signal_handler (int sig);
@@ -335,10 +342,6 @@ namespace qiconn
 	    inline void reqnow (int fd) { if (fd >= 0) FD_CLR (fd, &w_fd); }
 	    
 	    virtual ~ConnectionPool (void);
-
-	    void push (Connection *c);
-
-	    void pull (Connection *c);
 
 	    ostream& dump (ostream& cout) const;
     };
