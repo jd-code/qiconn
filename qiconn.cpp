@@ -533,7 +533,7 @@ if (fd >= 0)
 	    pend_signals[i] = 0;
 	caught_signal = 0;
 
-	return add_signal_handler (13);
+	return add_signal_handler (SIGPIPE);	// broken pipe
     }
 
     void ConnectionPool::treat_signal (void) {
