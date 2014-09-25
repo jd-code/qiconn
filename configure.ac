@@ -30,6 +30,9 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([qiconn], [1.0.4], [qiconn@nekodune.com])
 AC_CONFIG_SRCDIR([./qiconn.cpp])
 
+QICONN_LIB_CURRENT=0
+QICONN_LIB_REVISION=0
+QICONN_LIB_AGE=0
 
 dnl Detect the canonical host and target build environment
 AC_CANONICAL_HOST
@@ -158,6 +161,9 @@ case "$target" in
 	;;
 esac
 
+dnl export libqiconn versionning numbers
+LIBQICONN_LDFLAGS="-version-info ${QICONN_LIB_CURRENT}:${QICONN_LIB_REVISION}:${QICONN_LIB_AGE}"
+AC_SUBST(LIBQICONN_LDFLAGS)
 
 dnl concatenation of include dirs
 CFLAGS="$CFLAGS $INCPATH"
