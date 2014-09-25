@@ -27,7 +27,7 @@ dnl
 dnl qiconn@nekodune.com  -  http://qiconn.nekodune.com/
 
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([qiconn], [1.0.4], [qiconn@nekodune.com])
+AC_INIT([qiconn], [1.0.5], [qiconn@nekodune.com])
 AC_CONFIG_SRCDIR([./qiconn.cpp])
 
 QICONN_LIB_CURRENT=0

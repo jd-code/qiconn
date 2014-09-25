@@ -1,0 +1,24 @@
+This work was packaged for Debian by:
+
+    Jean-Daniel Pauget <pauget@nekodune.com> on Mon, 30 Jun 2014 14:49:14 +0200
+
+It was downloaded from git://repoz.nekodune.net/qiconn.git
+
+Upstream Author(s):
+
+    Jean-Daniel Pauget <pauget@nekodune.com>
+
+Copyright:
+
+    Copyright (C) 2003-2014 Jean-Daniel Pauget
+
+License:
+
+    LGPL-2.1
+
+The Debian packaging is:
+
+    Copyright (C) 2014 Jean-Daniel Pauget <pauget@nekodune.com>
+    and is licensed under the LGPL version 2.1, 
+    see  /usr/share/common-licenses/LGPL-2.1
+

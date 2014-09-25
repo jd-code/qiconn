@@ -6,7 +6,7 @@ vimtest: all
 ## this target is for maintainers
 tarfiles.txt:
 	repozclean && autoall
-	( find . | grep -v '\.git') > tarfiles.txt
+	( find . | grep -v '\.git' | grep -v 'debian-src/' ) > tarfiles.txt
 
 tar: tarfiles.txt qiconn.cpp include/qiconn/qiconn.h
 	tar -zcphf qiconn_"${VERSION}".orig.tar.gz --no-recursion --transform='s=^='qiconn_"${VERSION}"'/=' -T tarfiles.txt
@@ -29,7 +29,7 @@ doc: include/qiconn/*.h *.cpp qiconn.dox
 	doxygen qiconn.dox
 
 clean-local:
-	rm -rf qiconn-doc
+	rm -rf qiconn-doc tarfiles.txt qiconn_"${VERSION}".orig.tar.gz
 
 distclean-local:
 	rm -f m4/*.m4

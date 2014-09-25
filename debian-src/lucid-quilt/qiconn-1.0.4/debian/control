@@ -1,0 +1,23 @@
+Source: qiconn
+Priority: extra
+Maintainer: Jean-Daniel Pauget <pauget@nekodune.com>
+Build-Depends: quilt (>= 0.46-7~), debhelper (>= 7)
+Standards-Version: 3.8.3
+Section: libs
+Homepage: http://qiconn.nekodune.net/
+
+Package: libqiconn0-dev
+Section: libdevel
+Architecture: any
+Depends: libqiconn0 (= ${binary:Version})
+Description: dev files for C++ lib for handling a set of tcp sessions
+ libqiconn provide a set of C++ classes for scheduling simple events
+ for the regular lifetime of TCP sessions.
+
+Package: libqiconn0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++ lib for handling a set of tcp sessions
+ libqiconn provide a set of C++ classes for scheduling simple events
+ for the regular lifetime of TCP sessions.
