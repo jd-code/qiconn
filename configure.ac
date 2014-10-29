@@ -161,6 +161,19 @@ case "$target" in
 	;;
 esac
 
+dnl check for mac-osX gcc stl variant
+case "$target" in
+    *-apple-darwin*)
+	CXXFLAGS="$CXXFLAGS -stdlib=libstdc++"
+	AC_MSG_RESULT([stdlib variant : -stdlib=libstdc++])
+	;;
+    *)
+	:
+	;;
+esac
+
+
+
 dnl export libqiconn versionning numbers
 LIBQICONN_LDFLAGS="-version-info ${QICONN_LIB_CURRENT}:${QICONN_LIB_REVISION}:${QICONN_LIB_AGE}"
 AC_SUBST(LIBQICONN_LDFLAGS)
