@@ -55,13 +55,15 @@ namespace qiconn
 
     #define MAX_QUEUDED_CONNECTIONS 5
 
+    const char * addr_any= "*";
+
     int server_pool (int port, const char *addr /* = NULL */, int type /*= AF_INET*/) {
 	int s = server_pool_nodefer (port, addr, type);
 #if HAVE_SOL_TCP == 1
 	{   int yes = 1;
 	    if (setsockopt (s, SOL_TCP, TCP_DEFER_ACCEPT, &yes, sizeof (yes)) != 0) {
 		int e = errno;
-		cerr << "could not setsockopt TCP_DEFER_ACCEPT (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		cerr << "could not setsockopt TCP_DEFER_ACCEPT (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 		return -1;
 	    }
 	}
@@ -80,7 +82,7 @@ namespace qiconn
 	} else {
 	    if (inet_aton(addr, &serv_addr.sin_addr) == (int)INADDR_NONE) {
 		int e = errno;
-		cerr << "gethostbyaddr (" << addr << " failed : " << strerror (e) << endl;
+		cerr << "gethostbyaddr (" << ((addr==NULL)?addr_any:addr) << " failed : " << strerror (e) << endl;
 		return -1;
 	    }
 	}
@@ -93,7 +95,7 @@ namespace qiconn
 #endif
 	if (s == -1) {
 	    int e = errno;
-	    cerr << "could not create socket (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    cerr << "could not create socket (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	    return -1;
 	}
 #ifndef SOCK_CLOEXEC
@@ -101,7 +103,7 @@ namespace qiconn
 	long s_flags = 0;
 	if (fcntl (s, F_GETFD, s_flags) == -1) {
 	    int e = errno;
-	    cerr << "could not get socket flags (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    cerr << "could not get socket flags (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	    close (s);
 	    return -1;
 	}
@@ -109,7 +111,7 @@ namespace qiconn
 	s_flags |= FD_CLOEXEC;
 	if (fcntl (s, F_SETFD, s_flags)  == -1) {
 	    int e = errno;
-	    cerr << "could not set socket flags with FD_CLOEXEC (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    cerr << "could not set socket flags with FD_CLOEXEC (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	    close (s);
 	    return -1;
 	}
@@ -119,7 +121,7 @@ namespace qiconn
 	{   int yes = 1;
 	    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (yes)) != 0) {
 		int e = errno;
-		cerr << "could not setsockopt SO_REUSEADDR (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		cerr << "could not setsockopt SO_REUSEADDR (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 		return -1;
 	    }
 	}
@@ -134,14 +136,14 @@ namespace qiconn
 // ------------------ SO_SNDBUF
     if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 	int e = errno;
-	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
 //cout << "############### buflen = " << buflen << endl;
     buflen = 128*1024;
     if (setsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, sizeof(buflen)) != 0) {
 	int e = errno;
-	cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
 
@@ -149,7 +151,7 @@ namespace qiconn
     int clamp = 64*1024;
     if (setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
 	int e = errno;
-	cerr << "could not setsockopt TCP_WINDOW_CLAMP (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	cerr << "could not setsockopt TCP_WINDOW_CLAMP (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
 #endif
@@ -158,14 +160,14 @@ namespace qiconn
 // ------------------ TCP_MAXSEG
 ////    if (getsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, &param_len) != 0) {
 ////	int e = errno;
-////	cerr << "could not getsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	cerr << "could not getsockopt TCP_MAXSEG (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 ////	return -1;
 ////    }
 ////cout << "############### tcp_maxseg = " << buflen << endl;
 ////    buflen = 1500;
 ////    if (setsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, sizeof(buflen)) != 0) {
 ////	int e = errno;
-////	cerr << "could not setsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	cerr << "could not setsockopt TCP_MAXSEG (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 ////	return -1;
 ////    }
 
@@ -174,14 +176,14 @@ namespace qiconn
     int flag = 1;
     if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
 	int e = errno;
-	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	return -1;
     }
 
 ////    int flag = 0;
 ////    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
 ////	int e = errno;
-////	cerr << "could not setsockopt TCP_NODELAY=0 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+////	cerr << "could not setsockopt TCP_NODELAY=0 (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 ////	return -1;
 ////    }
 
@@ -189,7 +191,7 @@ namespace qiconn
 
 if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     int e = errno;
-    cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+    cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
     return -1;
 }
 //cout << "############### buflen = " << buflen << endl;
@@ -197,12 +199,12 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
 
 	if (bind (s, (struct sockaddr *)&serv_addr, sizeof (serv_addr)) != 0) {
 	    int e = errno;
-	    cerr << "could not bind socket (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    cerr << "could not bind socket (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	    return -1;
 	}
 	if (listen (s, MAX_QUEUDED_CONNECTIONS) != 0) {
 	    int e = errno;
-	    cerr << "could not listen socket (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	    cerr << "could not listen socket (for listenning connections " << ((addr==NULL)?addr_any:addr) << ":" << port << ") : " << strerror (e) << endl ;
 	    return -1;
 	}
 	return s;
