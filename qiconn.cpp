@@ -223,14 +223,14 @@ cerr << "scope for " << addr << " is " << serv_addr_6.sin6_scope_id << endl;
 	    }
 	}
 
-if (type == AF_INET6) {
-int on = 1;
-    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) != 0) {
-		int e = errno;
-		cerr << "could not setsockopt IPV6_V6ONLY (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-		return -1;
-    }
-}
+	if (type == AF_INET6) {	// this one is about listening on ipv6 only and not (supposely) * on ipv4 when requesting only ipv6
+	int on = 1;
+	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) != 0) {
+			int e = errno;
+			cerr << "could not setsockopt IPV6_V6ONLY (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+			return -1;
+	    }
+	}
 
 
 {
