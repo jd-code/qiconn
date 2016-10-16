@@ -23,7 +23,7 @@ namespace qiconn
     using namespace std;
 
     /*
-     *  ---------------------------- simple ostream operators for hostent and sockaddr_in --------------------
+     *  ---------------------------- simple ostream operators for hostent and sockaddr -----------------------
      */
 
     ostream& operator<< (ostream& out, const struct hostent &he) {
@@ -43,12 +43,43 @@ namespace qiconn
 	return out;
     }
 
-    ostream& operator<< (ostream& out, struct sockaddr_in const &a) {
-	const unsigned char* p = (const unsigned char*) &a.sin_addr;
-	out << (int)p[0] << '.' << (int)p[1] << '.' << (int)p[2] << '.' << (int)p[3];
+//    ostream& operator<< (ostream& out, struct sockaddr_in const &a) {
+//	const unsigned char* p = (const unsigned char*) &a.sin_addr;
+//	out << (int)p[0] << '.' << (int)p[1] << '.' << (int)p[2] << '.' << (int)p[3];
+//	return out;
+//    }
+
+    ostream& operator<< (ostream& out, struct sockaddr const &a) {
+	switch (a.sa_family) {
+	    case AF_INET:
+		{   const sockaddr_in & ip4 = *(const sockaddr_in*) &a;
+		    const unsigned char* p = (const unsigned char*) &ip4.sin_addr;
+		    out << (int)p[0] << '.' << (int)p[1] << '.' << (int)p[2] << '.' << (int)p[3];
+		    return out;
+		}
+		break;
+	    case AF_INET6:
+		{
+		    char buf [INET6_ADDRSTRLEN];
+		    const sockaddr_in6 & ip6 = *(const sockaddr_in6*) &a;
+		    const char * r = inet_ntop (AF_INET6, (const void *) &ip6.sin6_addr, buf, INET6_ADDRSTRLEN);
+		    if (r == NULL) {
+			int e = errno;
+			cerr << "ostream& operator<< : inet_ntop with sa_family=" << a.sa_family << " triggerred : " << strerror(e) << endl;
+		    }
+		    out << buf;
+		    return out;
+		}
+		break;
+	    default:
+		cerr << "ostream& operator<< : don't know what to do with sa_family=" << a.sa_family << endl;
+	}
 	return out;
     }
 
+    ostream& operator<< (ostream& out, struct sockaddr_storage const &a) {
+	return out << (*(const sockaddr*)&a);
+    }
     /*
      *  ---------------------------- server_pool : opens a socket for listing a port at a whole --------------
      */
@@ -69,27 +100,95 @@ namespace qiconn
 	return s;
     }
 
+
+//--------------------------------------------------------------------
+
+#include <net/if.h> // if_nametoindex()
+#include <ifaddrs.h> // getifaddrs()
+#include <netdb.h> // NI_ constants
+
+
+// returns 0 on error
+unsigned getScopeForIp(const char *ip){
+    struct ifaddrs *addrs;
+    char ipAddress[NI_MAXHOST];
+    unsigned scope=0;
+    // walk over the list of all interface addresses
+    getifaddrs(&addrs);
+    for(ifaddrs *addr=addrs;addr;addr=addr->ifa_next){
+        if (addr->ifa_addr && addr->ifa_addr->sa_family==AF_INET6){ // only interested in ipv6 ones
+            getnameinfo(addr->ifa_addr,sizeof(struct sockaddr_in6),ipAddress,sizeof(ipAddress),NULL,0,NI_NUMERICHOST);
+            // result actually contains the interface name, so strip it
+            for(int i=0;ipAddress[i];i++){
+                if(ipAddress[i]=='%'){
+                    ipAddress[i]='\0';
+                    break;
+                }
+            }
+            // if the ip matches, convert the interface name to a scope index
+            if(strcmp(ipAddress,ip)==0){
+                scope=if_nametoindex(addr->ifa_name);
+                break;
+            }
+        }
+    }
+    freeifaddrs(addrs);
+    return scope;
+}
+
+//--------------------------------------------------------------------
+
     int server_pool_nodefer (int port, const char *addr /* = NULL */, int type /*= AF_INET*/) {
-	struct sockaddr_in serv_addr;
+	struct sockaddr_storage serv_addr;
 
 	memset (&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons (port);
-	if (addr == NULL) {
-	    serv_addr.sin_addr.s_addr = INADDR_ANY;
-	} else {
-	    if (inet_aton(addr, &serv_addr.sin_addr) == (int)INADDR_NONE) {
-		int e = errno;
-		cerr << "gethostbyaddr (" << addr << " failed : " << strerror (e) << endl;
+
+	switch (type) {
+	    case AF_INET:
+		{   sockaddr_in &serv_addr_4 = *(sockaddr_in *) &serv_addr;
+		    serv_addr_4.sin_family = type;
+		    serv_addr_4.sin_port = htons (port);
+		    if (addr == NULL) {
+			serv_addr_4.sin_addr.s_addr = INADDR_ANY;
+		    } else {
+			if (inet_aton(addr, &serv_addr_4.sin_addr) == (int)INADDR_NONE) {
+			    int e = errno;
+			    cerr << "gethostbyaddr (" << addr << " failed : " << strerror (e) << endl;
+			    return -1;
+			}
+		    }
+		}
+		break;
+
+	    case AF_INET6:
+		{   sockaddr_in6 &serv_addr_6 = *(sockaddr_in6 *) &serv_addr;
+		    serv_addr_6.sin6_family = type;
+		    serv_addr_6.sin6_port = htons (port);
+		    serv_addr_6.sin6_port = htons (80);
+		    if (addr == NULL) {
+			serv_addr_6.sin6_addr = in6addr_any;
+		    } else {
+			if (inet_pton(AF_INET6, addr, &serv_addr_6.sin6_addr) != 1) {
+			    int e = errno;
+			    cerr << "gethostbyaddr (" << addr << " failed : " << strerror (e) << endl;
+			    return -1;
+			}
+		    }
+serv_addr_6.sin6_scope_id = getScopeForIp (addr);
+cerr << "scope for " << addr << " is " << serv_addr_6.sin6_scope_id << endl;
+		}
+		break;
+
+	    default:
+		cerr << "server_pool_nodefer unknown of unhandeled type = " << type << endl;
 		return -1;
-	    }
 	}
 
 	int s;
 #ifdef SOCK_CLOEXEC
-	s = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+	s = socket(type, SOCK_STREAM | SOCK_CLOEXEC, 0);
 #else
-	s = socket(AF_INET, SOCK_STREAM, 0);
+	s = socket(type, SOCK_STREAM, 0);
 #endif
 	if (s == -1) {
 	    int e = errno;
@@ -124,7 +223,14 @@ namespace qiconn
 	    }
 	}
 
-
+if (type == AF_INET6) {
+int on = 1;
+    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) != 0) {
+		int e = errno;
+		cerr << "could not setsockopt IPV6_V6ONLY (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+    }
+}
 
 
 {
@@ -471,7 +577,7 @@ if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
     }
 
 
-    SocketConnection::SocketConnection (int fd, struct sockaddr_in const &client_addr)
+    SocketConnection::SocketConnection (int fd, struct sockaddr_storage const &client_addr)
 	: BufConnection (fd, true)
     {
 if (fd >= 0)
@@ -487,8 +593,8 @@ if (fd >= 0)
 	setname (client_addr);
     }
 
-    void SocketConnection::setname (struct sockaddr_in const &client_addr) {
-	SocketConnection::client_addr = client_addr;
+    void SocketConnection::setname (struct sockaddr_storage const &client_addr) {
+	SocketConnection::client_addr = *(const sockaddr_storage*)&client_addr;
 	stringstream s;
 	s << client_addr;
 	name = s.str();
@@ -1425,7 +1531,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 
 
     int ListeningSocket::addconnect (int socket) {
-	struct sockaddr_in client_addr;
+	struct sockaddr_storage client_addr;
 	socklen_t size_addr = sizeof(client_addr);
 #ifdef SOCK_CLOEXEC
 	int f = accept4 ( socket, (struct sockaddr *) &client_addr, &size_addr, SOCK_CLOEXEC );

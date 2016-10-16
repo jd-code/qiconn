@@ -121,11 +121,12 @@ namespace qiconn
 
 
     /*
-     *  ---------------------------- simple ostream operators for hostent and sockaddr_in --------------------
+     *  ---------------------------- simple ostream operators for hostent and sockaddr -----------------------
      */
 
     ostream& operator<< (ostream& out, const struct hostent &he);
-    ostream& operator<< (ostream& out, struct sockaddr_in const &a);
+    ostream& operator<< (ostream& out, struct sockaddr const &a);
+    ostream& operator<< (ostream& out, struct sockaddr_storage const &a);
 
     /*
      *  ---------------------------- server_pool : opens a socket for listening a port at a whole ------------
@@ -399,12 +400,12 @@ namespace qiconn
     class SocketConnection : public BufConnection
     {
 	protected:
-	                           struct sockaddr_in client_addr;
+	                           struct sockaddr_storage client_addr;
 	                           string name;
 	public:
 	        virtual ~SocketConnection (void) { if (debug_fddestr) cerr << "destruction of fd[" << fd << ", " << name << "]" << endl; }
-	                 SocketConnection (int fd, struct sockaddr_in const &client_addr);
-	             virtual void setname (struct sockaddr_in const &client_addr);
+	                 SocketConnection (int fd, struct sockaddr_storage const &client_addr);
+	             virtual void setname (struct sockaddr_storage const &client_addr);
 	    inline virtual string getname (void) {
 		return name;
 	    }
@@ -423,7 +424,7 @@ namespace qiconn
 //	    virtual void write (void) { BufConnection::write();} 
 //	    virtual string getname (void) { return SocketConnection::getname(); }
 //	    virtual void poll (void) = 0;
-						DummyConnection (int fd, struct sockaddr_in const &client_addr) : SocketConnection (fd, client_addr) {}
+						DummyConnection (int fd, struct sockaddr_storage const &client_addr) : SocketConnection (fd, client_addr) {}
 					virtual	~DummyConnection (void);
 				   virtual void	lineread (void) {}
 				   virtual void poll (void) {}
@@ -477,7 +478,7 @@ namespace qiconn
 			       void setname (const string & name);
 				    ListeningSocket (int fd);
 				    ListeningSocket (int fd, const string & name);
-	   virtual SocketConnection* connection_binder (int fd, struct sockaddr_in const &client_addr) = 0;
+	   virtual SocketConnection* connection_binder (int fd, struct sockaddr_storage const &client_addr) = 0;
 		     virtual string getname (void);
 		     virtual size_t read (void);
 		     virtual size_t write (void);
