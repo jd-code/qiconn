@@ -233,73 +233,73 @@ cerr << "scope for " << addr << " is " << serv_addr_6.sin6_scope_id << endl;
 	}
 
 
-{
-    int buflen;
-    socklen_t param_len = sizeof(buflen);
+	{
+	    int buflen;
+	    socklen_t param_len = sizeof(buflen);
 
-// ------------------ SO_SNDBUF
-    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
-	int e = errno;
-	cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-	return -1;
-    }
-//cout << "############### buflen = " << buflen << endl;
-    buflen = 128*1024;
-    if (setsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, sizeof(buflen)) != 0) {
-	int e = errno;
-	cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-	return -1;
-    }
+	// ------------------ SO_SNDBUF
+	    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+		int e = errno;
+		cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
+	//cout << "############### buflen = " << buflen << endl;
+	    buflen = 128*1024;
+	    if (setsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, sizeof(buflen)) != 0) {
+		int e = errno;
+		cerr << "could not setsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
 
 #if HAVE_TCP_WINDOW_CLAMP == 1
-    int clamp = 64*1024;
-    if (setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
-	int e = errno;
-	cerr << "could not setsockopt TCP_WINDOW_CLAMP (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-	return -1;
-    }
+	    int clamp = 64*1024;
+	    if (setsockopt (s, IPPROTO_TCP, TCP_WINDOW_CLAMP, &clamp, sizeof(clamp)) != 0) {
+		int e = errno;
+		cerr << "could not setsockopt TCP_WINDOW_CLAMP (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
 #endif
 
 
-// ------------------ TCP_MAXSEG
-////    if (getsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, &param_len) != 0) {
-////	int e = errno;
-////	cerr << "could not getsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-////	return -1;
-////    }
-////cout << "############### tcp_maxseg = " << buflen << endl;
-////    buflen = 1500;
-////    if (setsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, sizeof(buflen)) != 0) {
-////	int e = errno;
-////	cerr << "could not setsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-////	return -1;
-////    }
+	// ------------------ TCP_MAXSEG
+	////    if (getsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, &param_len) != 0) {
+	////	int e = errno;
+	////	cerr << "could not getsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	////	return -1;
+	////    }
+	////cout << "############### tcp_maxseg = " << buflen << endl;
+	////    buflen = 1500;
+	////    if (setsockopt (s, IPPROTO_TCP, TCP_MAXSEG, &buflen, sizeof(buflen)) != 0) {
+	////	int e = errno;
+	////	cerr << "could not setsockopt TCP_MAXSEG (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	////	return -1;
+	////    }
 
 
 
-    int flag = 1;
-    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
-	int e = errno;
-	cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-	return -1;
-    }
+	    int flag = 1;
+	    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+		int e = errno;
+		cerr << "could not setsockopt TCP_NODELAY=1 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
 
-////    int flag = 0;
-////    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
-////	int e = errno;
-////	cerr << "could not setsockopt TCP_NODELAY=0 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-////	return -1;
-////    }
+	////    int flag = 0;
+	////    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0) {
+	////	int e = errno;
+	////	cerr << "could not setsockopt TCP_NODELAY=0 (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+	////	return -1;
+	////    }
 
 
 
-if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
-    int e = errno;
-    cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
-    return -1;
-}
-//cout << "############### buflen = " << buflen << endl;
-}
+	    if (getsockopt (s, SOL_SOCKET, SO_SNDBUF, &buflen, &param_len) != 0) {
+		int e = errno;
+		cerr << "could not getsockopt SO_SNDBUF (for listenning connections " << addr << ":" << port << ") : " << strerror (e) << endl ;
+		return -1;
+	    }
+	    //cout << "############### buflen = " << buflen << endl;
+	}
 
 	if (bind (s, (struct sockaddr *)&serv_addr, sizeof (serv_addr)) != 0) {
 	    int e = errno;
