@@ -1648,7 +1648,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	size_t n = 0;
 	while ((n < maxsize) && cin.get(c) && (c != 10) && (c != 13))
 	    s += c, n++;
-	return (cin);
+	return ((bool)cin);
     }
 
     size_t seekspace (const string &s, size_t p /* = 0 */) {
