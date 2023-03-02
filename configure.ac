@@ -76,8 +76,8 @@ dnl ####    AC_SUBST(QICONNSOURCE)
 
 dnl badly look for qiconn includes ...
 AC_MSG_CHECKING(for qiconn headers)
-if test -f include/qiconn/qiconn.h ; then
-    INCPATH="$INCPATH -Iinclude"
+if test -f qiconn/qiconn.h ; then
+    INCPATH="$INCPATH -I."
     AC_MSG_RESULT(found)
 else
     AC_MSG_ERROR(Unable to find qiconn hearders)
