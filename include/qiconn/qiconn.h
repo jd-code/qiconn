@@ -428,6 +428,7 @@ namespace qiconn
 					virtual	~DummyConnection (void);
 				   virtual void	lineread (void) {}
 				   virtual void poll (void) {}
+			   virtual const char * gettype (void) { return "DummyConnection"; }
     };
 
 //    class DummyConnection : public SocketConnection

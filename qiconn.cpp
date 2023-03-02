@@ -164,7 +164,7 @@ unsigned getScopeForIp(const char *ip){
 		{   sockaddr_in6 &serv_addr_6 = *(sockaddr_in6 *) &serv_addr;
 		    serv_addr_6.sin6_family = type;
 		    serv_addr_6.sin6_port = htons (port);
-		    serv_addr_6.sin6_port = htons (80);
+		    serv_addr_6.sin6_port = htons (80);	// JDJDJDJDJD this is weird ????
 		    if (addr == NULL) {
 			serv_addr_6.sin6_addr = in6addr_any;
 		    } else {
@@ -1648,7 +1648,7 @@ if (debug_corking) cout << "fd[" << fd << "] || corking" << endl;
 	size_t n = 0;
 	while ((n < maxsize) && cin.get(c) && (c != 10) && (c != 13))
 	    s += c, n++;
-	return (cin);
+	return ((bool)cin);
     }
 
     size_t seekspace (const string &s, size_t p /* = 0 */) {
