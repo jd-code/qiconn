@@ -21,3 +21,6 @@ in order to compile on a debian buster :
 * libtool
 * expect (provides unbuffer used in the "vimtest" target)
 
+---
+
+> jd
